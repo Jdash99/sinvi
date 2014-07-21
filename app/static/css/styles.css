@@ -1,0 +1,13 @@
+#parameters {
+	padding: 0px 30px 0px 30px;
+}
+
+#parameters.affix {
+    position: fixed;
+    top: 0;
+    width:550px;
+  }
+
+table.dataframe {
+    border: none !important;
+} 
