@@ -53,6 +53,9 @@ que está por llegar, de esta forma se evita la tendencia de subestimar o excede
 
 # Uso Básico
 
+Dentro de la carpeta app, ejecutar:
+```python views.py runserver```
+
 ![Alt text](simulation.jpg)
 
 En el campo "periods" se digitan el número de periodos que durará la simulación según la unidad

@@ -1,0 +1,7 @@
+Flask==0.10.1
+Flask-Bootstrap==3.1.1.2
+green==1.1.0
+bokeh==0.5.0
+numpy==1.8.1
+pandas==0.14.0
+flask-script
