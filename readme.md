@@ -54,7 +54,14 @@ que está por llegar, de esta forma se evita la tendencia de subestimar o excede
 # Uso Básico
 
 Dentro de la carpeta app, ejecutar:
+
 ```python views.py runserver```
+
+Luego abres el servidor local:
+
+```http://localhost:5000/```
+
+Esto es lo que deberia mostrar:
 
 ![Alt text](simulation.jpg)
 
