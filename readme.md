@@ -53,6 +53,8 @@ que está por llegar, de esta forma se evita la tendencia de subestimar o excede
 
 # Uso Básico
 
+![Alt text](simulation.jpg)
+
 En el campo "periods" se digitan el número de periodos que durará la simulación según la unidad
 de tiempo que utilices (dias, semanas, meses).
 
@@ -78,22 +80,20 @@ y además mostrar los resultados de la simulación en una tabla.
 
 ## Aclaraciones ejemplo
 
-![Alt text](simulation.jpg)
-
 Periodos: 52 semanas
 Política Q: 20000, s: 10000
 La demanda sigue una dist. normal con media: 8000 y desvest: 1000
 Lead time sigue una dist. triangular con min=0 moda=1 y max=2.
 
-sem 0: Preparación datos. Inventario inicial/final == Posición inventario inicial/final
-sem 1: Demanda 6411 unds. Se descuenta al inventario. No hay ordenes pendientes.
-sem 2: Se descuenta D a IIP y INI. FIP < 10k, se realiza un pedido de 20k que llegara en un día.
-sem 3: Se actualiza IIP con el pedido anterior. Se descuenta D respectivamente. Se pierden ventas.
-sem 4: Llega el pedido de sem 2. Se actualiza INI. FIP < 10k, orden de 20k que llegará el mismo día.
-.
-.
-.
-sem 53: Fin simulación.
+- sem 0: Preparación datos. Inventario inicial/final == Posición inventario inicial/final
+- sem 1: Demanda 6411 unds. Se descuenta al inventario. No hay ordenes pendientes.
+- sem 2: Se descuenta D a IIP y INI. FIP < 10k, se realiza un pedido de 20k que llegara en un día.
+- sem 3: Se actualiza IIP con el pedido anterior. Se descuenta D respectivamente. Se pierden ventas.
+- sem 4: Llega el pedido de sem 2. Se actualiza INI. FIP < 10k, orden de 20k que llegará el mismo día.
+- .
+- .
+- .
+- sem 53: Fin simulación.
 
 # TODO
 
