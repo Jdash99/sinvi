@@ -59,9 +59,9 @@ Dentro de la carpeta app, ejecutar:
 
 Luego abres el servidor local:
 
-```http://localhost:5000/```
+``` http://localhost:5000/ ```
 
-Esto es lo que deberia mostrar:
+Esto es lo que debería mostrar la página:
 
 ![Alt text](simulation.jpg)
 
