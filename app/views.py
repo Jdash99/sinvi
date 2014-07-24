@@ -1,13 +1,18 @@
 import numpy as np
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 from flask.ext.script import Manager
 from flask.ext.bootstrap import Bootstrap
+from flask.ext.wtf import Form
+from wtforms import SelectField, IntegerField, SubmitField
+from wtforms.validators import NumberRange
 from plots import build_plot
-from functions import Product, make_data, make_distribution
+from functions import Product, make_data, make_distribution, build_formatters
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'hard to guess string'
 manager = Manager(app)
 bootstrap = Bootstrap(app)
+
 
 # This is an example product, but the idea is to create your own products with
 # different demand and lead time distributions. Not implemented yet...
@@ -20,33 +25,45 @@ example_product = Product(name="Product_A",
                           price=8)
 
 
+class ParametersForm(Form):
+    periods = IntegerField('Periods', validators=[
+        NumberRange(min=1, message="This number must be greater than zero")])
+    policy = SelectField('Policy',
+                         choices=[("Qs", "Qs"), ("RS", "RS")],
+                         default="Qs")
+    p1 = IntegerField(validators=[
+        NumberRange(min=1, message="This number must be greater than zero")])
+    p2 = IntegerField(validators=[
+        NumberRange(min=1, message="This number must be greater than zero")])
+    submit = SubmitField('Submit')
+
+
 # Define our URLs and pages.
 @app.route('/', methods=['GET', 'POST'])
 def render_plot():
-    # Default values
-    periods = 0
-    policy_params = {'method': "Qs", 'param1': 500, 'param2': 500}
-    product = example_product
 
-    # Receiving values
-    try:
-        periods = int(request.form['periods'])
-        policy_params = {'method': request.form['policy'],
-                         'param1': int(request.form['p1']),
-                         'param2': int(request.form['p2'])
+    form = ParametersForm()
+    plot_snippet = None
+    table = None
+
+    if form.validate_on_submit():
+        periods = (form.periods.data)
+        policy_params = {'method': form.policy.data,
+                         'param1': int(form.p1.data),
+                         'param2': int(form.p2.data)
                          }
-    except:
-        print("An error has ocurred when getting the parameters")
-
-    plot_data = make_data(product, policy_params, periods)
-    plot_snippet = build_plot(plot_data, policy_params)
-    table = plot_data.to_html(
-        classes="table table-hover table-condensed").replace(
-        'border="1"', 'border="0"')
-
+        plot_data = make_data(example_product, policy_params, periods)
+        plot_snippet = build_plot(plot_data, policy_params)
+        num_format = lambda x: '{:,}'.format(x)
+        formatters = build_formatters(plot_data, num_format)
+        table = plot_data.to_html(
+            formatters=formatters,
+            classes="table table-hover table-condensed").replace(
+            'border="1"', 'border="0"')
     return render_template('plots.html',
                            plot=plot_snippet,
-                           data=table)
+                           data=table,
+                           form=form)
 
 if __name__ == '__main__':
     manager.run()

@@ -157,3 +157,11 @@ def placeorder(product, final_inv_pos, policy, period):
         return policy['param2'] - final_inv_pos, lead_time
     else:
         return 0, 0
+
+num_format = lambda x: '{:,}'.format(x)
+
+
+def build_formatters(df, format):
+    return {column: format
+            for (column, dtype) in df.dtypes.iteritems()
+            if dtype in [np.dtype('int64'), np.dtype('float64')]}
