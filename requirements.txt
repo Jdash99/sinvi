@@ -6,3 +6,6 @@ numpy
 pandas
 flask-script
 Flask-WTF
+gunicorn
+Jinja2
+Werkzeug
