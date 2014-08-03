@@ -1,0 +1,220 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Uso Básico &mdash; SinVi 0.0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="SinVi 0.0.1 documentation" href="index.html"/>
+        <link rel="prev" title="Supuestos" href="supuestos.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> SinVi</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="identificacion_problema.html">Identificación del problema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supuestos.html">Supuestos</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Uso Básico</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#parametros-del-ejemplo">Parametros del ejemplo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#anotaciones-semana-a-semana-del-ejemplo">Anotaciones semana a semana del ejemplo</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">SinVi</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Uso Básico</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/uso_basico.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="uso-basico">
+<h1>Uso Básico<a class="headerlink" href="#uso-basico" title="Permalink to this headline">¶</a></h1>
+<p>Puedes ver el demo en:</p>
+<p><a class="reference external" href="http://sinvi-app.herokuapp.com/">http://sinvi-app.herokuapp.com/</a></p>
+<p>O si tienes el repositorio:</p>
+<div class="highlight-html"><div class="highlight"><pre>$ pip install -r requirements.txt
+$ python views.py runserver
+* Running on http://localhost:5000/
+</pre></div>
+</div>
+<p>Esto es un ejemplo de lo que debería mostrar la página:</p>
+<img alt="_images/simulation.jpg" src="_images/simulation.jpg" />
+<p>En el campo &#8220;periods&#8221; se digitan el número de periodos que durará la simulación según la unidad
+de tiempo que utilices (dias, semanas, meses).</p>
+<p>En &#8220;Policy&#8221; seleccionas la politica deseada e ingresas los argumentos. Solo hay dos políticas en el momento Qs y RS.
+Por ejemplo Qs, donde s se le asigna un valor de 10.000 unidades y a Q 20.000 unidades.</p>
+<p>Presionas el botón &#8220;Submit&#8221; para iniciar la simulación. La aplicación en la parte derecha debe
+mostrar una gráfica de como se comporta el nivel de inventario de acuerdo a la política escogida
+y además mostrar los resultados de la simulación en una tabla.</p>
+<div class="section" id="parametros-del-ejemplo">
+<h2>Parametros del ejemplo<a class="headerlink" href="#parametros-del-ejemplo" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Periodos</strong>: 52 semanas</li>
+<li><strong>Política</strong> Q: 20000, s: 10000</li>
+<li>La demanda sigue una <strong>dist</strong>. normal con <strong>media</strong>: 8000 y <strong>desvest</strong>: 1000</li>
+<li>Lead time sigue una <strong>dist</strong>. triangular con <strong>min</strong> = 0 <strong>moda</strong> = 1 y <strong>max</strong> = 2.</li>
+</ul>
+<p><strong>Abreviaciones</strong></p>
+<div class="highlight-python"><div class="highlight"><pre>IIP: Posición de inventario inicial
+INI: Inventario neto inicial
+D: Demanda
+FIP: Posición de inventario final
+FNI: Inventario neto final
+LS: Ventas perdidas
+AVG: Inventario neto promedio
+ORD: Cantidad a ordenar
+LT: Lead time
+</pre></div>
+</div>
+</div>
+<div class="section" id="anotaciones-semana-a-semana-del-ejemplo">
+<h2>Anotaciones semana a semana del ejemplo<a class="headerlink" href="#anotaciones-semana-a-semana-del-ejemplo" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre>Sem 0: Preparación datos. Inventario inicial/final == Posición inventario inicial/final
+Sem 1: Demanda 6411 unds. Se descuenta al inventario. No hay ordenes pendientes.
+Sem 2: Se descuenta D a IIP y INI. FIP &lt; 10k, se realiza un pedido de 20k que llegara en un día.
+Sem 3: Se actualiza IIP con el pedido anterior. Se descuenta D respectivamente. Se pierden ventas.
+Sem 4: Llega el pedido de sem 2. Se actualiza INI. FIP &lt; 10k, orden de 20k que llegará el mismo día.
+.
+.
+.
+Sem 53: Fin simulación.
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="supuestos.html" class="btn btn-neutral" title="Supuestos"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Javier Cárdenas.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
