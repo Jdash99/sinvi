@@ -1,5 +1,5 @@
 import numpy as np
-from flask import Flask, render_template
+from flask import Flask, render_template, session, redirect, url_for
 from flask.ext.script import Manager
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.wtf import Form
@@ -43,27 +43,33 @@ class ParametersForm(Form):
 def render_plot():
 
     form = ParametersForm()
-    plot_snippet = None
-    table = None
 
     if form.validate_on_submit():
-        periods = (form.periods.data)
+        periods = form.periods.data
         policy_params = {'method': form.policy.data,
-                         'param1': int(form.p1.data),
-                         'param2': int(form.p2.data)
+                         'param1': form.p1.data,
+                         'param2': form.p2.data
                          }
-        plot_data = make_data(example_product, policy_params, periods)
-        plot_snippet = build_plot(plot_data, policy_params)
+        plot_data = make_data(example_product,
+                              policy_params,
+                              periods)
+        session['plot_snippet'] = build_plot(plot_data, policy_params)
         num_format = lambda x: '{:,}'.format(x)
         formatters = build_formatters(plot_data, num_format)
-        table = plot_data.to_html(
+        session['table'] = plot_data.to_html(
             formatters=formatters,
             classes="table table-hover table-condensed").replace(
             'border="1"', 'border="0"')
+        print "before {}".format(session.keys())
+        return redirect(url_for('render_plot',
+                        plot_snippet=session.get('plot_snippet'),
+                        table=session.get('table')))
+    print "after {}".format(session.keys())
     return render_template('plots.html',
-                           plot=plot_snippet,
-                           data=table,
-                           form=form)
+                           form=form,
+                           plot_snippet=session.get('plot_snippet'),
+                           table=session.get('table')
+                           )
 
 if __name__ == '__main__':
     manager.run()

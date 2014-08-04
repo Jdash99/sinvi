@@ -59,7 +59,7 @@
   </div>
 
   <!-- Plot -->
-  <div class="col-md-7">
+<!--   <div class="col-md-7">
   {% if plot %}
     <h2>Simulation Plot</h2>
     {{ plot|safe }}
@@ -68,6 +68,15 @@
       {{ data|safe }}
     </div>
   {% endif %}
+  </div> -->
+
+  <div class="col-md-7">
+    <h2>Simulation Plot</h2>
+    {{ plot_snippet|safe }}
+    <h2>Simulation Data</h2>
+    <div class="col-md-12">
+      {{ table|safe }}
+    </div>
   </div>
 </div>
 
