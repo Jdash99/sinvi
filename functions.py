@@ -6,12 +6,14 @@ class Product(object):
     """Class that represents a product"""
 
     def __init__(self, name, demand_dist,
-                 lead_time_dist, initial_inventory, price):
+                 lead_time_dist, initial_inventory,
+                 price, ord_cost):
         self.name = name
         self.demand_dist = demand_dist
         self.lead_time_dist = lead_time_dist
         self.initial_inventory = initial_inventory
         self.price = price
+        self.ord_cost = ord_cost
 
     def __repr__(self):
         return self.name
@@ -79,6 +81,7 @@ def make_data(product, policy, periods):
             df['INI'][period] = product.initial_inventory
             df['FIP'][period] = product.initial_inventory
             df['FNI'][period] = product.initial_inventory
+
         if period >= 1:
             df['IIP'][period] = df['FIP'][period - 1] + order_l[period - 1].quantity
             df['INI'][period] = df['FNI'][period - 1] + pending_order(order_l, period)

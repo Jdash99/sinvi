@@ -18,7 +18,7 @@ df_A = make_data(product_A,
                  periods=52)
 
 # Product with a normal demand and triangular lead_time
-# Set the seed so we can get the same sequence of numeber
+# Set the seed so we can get the same sequence of number
 np.random.seed(42)
 
 product_B = Product(name="Product_B",

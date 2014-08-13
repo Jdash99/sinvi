@@ -30,9 +30,13 @@
     {{super()}}
     <link rel="stylesheet"
           href="{{url_for('static', filename='css/styles.css')}}">
+    <link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
 {% endblock %}
 
 {% block scripts %}
     {{super()}}   
+    <script src="{{url_for('static', filename='js/d3.js')}}"></script>
+    <script src="{{url_for('static', filename='js/dimple.v2.1.0.js')}}"></script>
     <script src="{{url_for('static', filename='js/parameters.js')}}"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>   
 {% endblock %}

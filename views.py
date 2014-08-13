@@ -1,11 +1,11 @@
+import json
 import numpy as np
-from flask import Flask, render_template, session, redirect, url_for
+from flask import Flask, render_template, session, redirect, url_for, request
 from flask.ext.script import Manager
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.wtf import Form
 from wtforms import SelectField, IntegerField, SubmitField
 from wtforms.validators import NumberRange
-from plots import build_plot
 from functions import Product, make_data, make_distribution, build_formatters
 
 app = Flask(__name__)
@@ -22,7 +22,8 @@ example_product = Product(name="Product_A",
                           lead_time_dist=make_distribution(
                               np.random.triangular, 0, 1, 2),
                           initial_inventory=24000,
-                          price=8)
+                          price=8,
+                          ord_cost=200)
 
 
 class ParametersForm(Form):
@@ -31,9 +32,9 @@ class ParametersForm(Form):
     policy = SelectField('Policy',
                          choices=[("Qs", "Qs"), ("RS", "RS")],
                          default="Qs")
-    p1 = IntegerField(validators=[
+    p1 = IntegerField('p1', validators=[
         NumberRange(min=1, message="This number must be greater than zero")])
-    p2 = IntegerField(validators=[
+    p2 = IntegerField('p2', validators=[
         NumberRange(min=1, message="This number must be greater than zero")])
     submit = SubmitField('Submit')
 
@@ -41,35 +42,42 @@ class ParametersForm(Form):
 # Define our URLs and pages.
 @app.route('/', methods=['GET', 'POST'])
 def render_plot():
-
     form = ParametersForm()
+    return render_template('plots.html', form=form)
 
-    if form.validate_on_submit():
-        periods = form.periods.data
-        policy_params = {'method': form.policy.data,
-                         'param1': form.p1.data,
-                         'param2': form.p2.data
-                         }
-        plot_data = make_data(example_product,
-                              policy_params,
-                              periods)
-        session['plot_snippet'] = build_plot(plot_data, policy_params)
-        num_format = lambda x: '{:,}'.format(x)
-        formatters = build_formatters(plot_data, num_format)
-        session['table'] = plot_data.to_html(
-            formatters=formatters,
-            classes="table table-hover table-condensed").replace(
-            'border="1"', 'border="0"')
-        print "before {}".format(session.keys())
-        return redirect(url_for('render_plot',
-                        plot_snippet=session.get('plot_snippet'),
-                        table=session.get('table')))
-    print "after {}".format(session.keys())
-    return render_template('plots.html',
-                           form=form,
-                           plot_snippet=session.get('plot_snippet'),
-                           table=session.get('table')
-                           )
+
+@app.route('/plot', methods=['GET', 'POST'])
+def plot():
+    if request.method == "POST":
+        data = request.get_json()
+        policy = data['policy']
+        periods = int(data['periods'])
+        p1 = int(data['p1'])
+        p2 = int(data['p2'])
+        product_A = Product(name="Product_A",
+                            demand_dist=8000,
+                            lead_time_dist=1,
+                            initial_inventory=24000,
+                            price=18,
+                            ord_cost=200)
+
+        df_A = make_data(product_A,
+                         policy={'method': policy,
+                                 'param1': p1,
+                                 'param2': p2},
+                         periods=periods)
+
+        carrying_costs = int(df_A['AVG'].sum() * product_A.price * (0.21/52))
+        stock_out_costs = int(df_A['LS'].sum() * product_A.price)
+        ordering_costs = int(df_A.ORD[df_A.ORD > 0].count() * product_A.ord_cost)
+        step_data = [{"Periodo": int(x), "FIP": int(y)} for x, y in zip(df_A.index, df_A["FIP"])]
+
+        pie_data = [{"TipoCosto": "Carrying", "Costo": carrying_costs},
+                    {"TipoCosto": "Stock-Out", "Costo": stock_out_costs},
+                    {"TipoCosto": "Ordering", "Costo": ordering_costs}]
+
+        data = [step_data, pie_data]
+        return json.dumps(data)
 
 if __name__ == '__main__':
     manager.run()
