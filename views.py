@@ -70,7 +70,7 @@ def plot():
         carrying_costs = int(df_A['AVG'].sum() * product_A.price * (0.21/52))
         stock_out_costs = int(df_A['LS'].sum() * product_A.price)
         ordering_costs = int(df_A.ORD[df_A.ORD > 0].count() * product_A.ord_cost)
-        step_data = [{"Periodo": int(x), "FIP": int(y)} for x, y in zip(df_A.index, df_A["FIP"])]
+        step_data = [{"PERIOD": int(x), "FIP": int(y)} for x, y in zip(df_A.index, df_A["FIP"])]
 
         pie_data = [{"TipoCosto": "Carrying", "Costo": carrying_costs},
                     {"TipoCosto": "Stock-Out", "Costo": stock_out_costs},
