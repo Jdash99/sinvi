@@ -1,30 +1,3 @@
-var cleanAxis = function (axis, labelEvery, tickEvery) {
-    // This should have been called after draw, otherwise do nothing
-    if (axis.shapes.length > 0) {
-        var del = 0;
-        // If there is an interval set
-        if (labelEvery > 1) {
-            // Operate on all the axis text
-            axis.shapes.selectAll("text").each(function (d) {
-                d3.select(this).attr("opacity", 1);
-                // Remove all but the nth label
-                if (del % labelEvery !== 0) {
-                    d3.select(this).attr("opacity", 0); 
-                }
-                if (del % tickEvery !== 0) {
-                    // Find the corresponding tick line and remove
-                    axis.shapes.selectAll("line").each(function (d2) {
-                        if (d === d2) {
-                            d3.select(this).attr("opacity", 0); 
-                        }
-                    });
-                }
-                del += 1;
-          });
-        }
-    }
-};
-
 var start_data = [];
 for (var i = 1; i < 50; i ++) {
   start_data.push({'FIP': (Math.random() * 1000000), 'PERIOD': i });
@@ -38,23 +11,6 @@ var xAxis = stepChart.addCategoryAxis("x", "PERIOD");
 var yAxis = stepChart.addMeasureAxis("y", "FIP");
 var s = stepChart.addSeries(null, dimple.plot.line);
 s.interpolation = "step";
-
-s.afterDraw = function () {
-  var l = stepChart.data.length;
-  if (l < 10) {
-    cleanAxis(xAxis, 2, 1);
-  }
-  if (l >= 10 && l < 50) {
-    cleanAxis(xAxis, 5, 2);
-  }
-  if (l >= 50 && l < 100) {
-    cleanAxis(xAxis, 10, 2);
-  }
-  if (l >= 155) {
-    cleanAxis(xAxis, 20, 5);
-  }
-
-};
 
 stepChart.addLegend(60, 10, 300, 20, "right");
 xAxis.fontFamily = "Ubuntu";
