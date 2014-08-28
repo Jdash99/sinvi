@@ -30,12 +30,17 @@
     {{super()}}
     <link rel="stylesheet"
           href="{{url_for('static', filename='css/styles.css')}}">
+    <link rel="stylesheet"
+      href="{{url_for('static', filename='css/bootstrapValidator.css')}}">
     <link href="//fonts.googleapis.com/css?family=Ubuntu:300italic,300,400italic,400,500italic,500,700italic,700" rel="stylesheet" type="text/css">
 {% endblock %}
 
 {% block scripts %}
     {{super()}}   
+    <script src="{{url_for('static', filename='js/bootstrapValidator.js')}}"></script>
     <script src="{{url_for('static', filename='js/d3.js')}}"></script>
     <script src="{{url_for('static', filename='js/dimple.v2.1.0.js')}}"></script>
-    <script src="{{url_for('static', filename='js/parameters.js')}}"></script> 
+    <script src="{{url_for('static', filename='js/parameters.js')}}"></script>
+    <script src="{{url_for('static', filename='js/product.js')}}"></script>
+    <script src="{{url_for('static', filename='js/input_validation.js')}}"></script>
 {% endblock %}

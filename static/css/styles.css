@@ -1,5 +1,5 @@
 #parameters {
-	padding: 15px 15px 15px 15px;
+	padding: 15px 15px 15px 0px;
 	border-radius: 5px;
     border: 1px solid #e5e5e5;
     overflow-x: auto;
@@ -35,11 +35,13 @@ h1 {font-family: 'Ubuntu', sans-serif;
 
 body {font-family: 'Ubuntu', sans-serif;}
 
-.form-control:focus {
+/*.form-control:focus {
     border-width: 2px;
     border-color:#1ABC9C;
     box-shadow:none;
-}
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+}*/
 
 .form-control {
     padding-top: 5px;
@@ -65,3 +67,5 @@ body {font-family: 'Ubuntu', sans-serif;}
     background-color: #1ABC9C;
     color: #fff;
 }
+
+.hidden { display: none; }

@@ -2,33 +2,6 @@ import numpy as np
 from pandas import DataFrame
 
 
-class Product(object):
-    """Class that represents a product"""
-
-    def __init__(self, name, demand_dist,
-                 lead_time_dist, initial_inventory,
-                 price, ord_cost):
-        self.name = name
-        self.demand_dist = demand_dist
-        self.lead_time_dist = lead_time_dist
-        self.initial_inventory = initial_inventory
-        self.price = price
-        self.ord_cost = ord_cost
-
-    def __repr__(self):
-        return self.name
-
-    def demand(self):
-        if isinstance(self.demand_dist, int):
-            return self.demand_dist
-        return self.demand_dist()
-
-    def lead_time(self):
-        if isinstance(self.lead_time_dist, int):
-            return self.lead_time_dist
-        return self.lead_time_dist()
-
-
 class Order(object):
     """Object that stores basic data of an order"""
 

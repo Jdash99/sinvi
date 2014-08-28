@@ -1,0 +1,119 @@
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h1 class="modal-title" id="myModalLabel">Add Product</h1>
+      </div>
+      <div class="modal-body">
+        <form id="productForm" class="form-horizontal" role="form" method="POST">
+
+        <h2>Basic Information</h2>
+
+          <div class="form-group">
+            <label class="col-md-3 control-label">Product</label>
+            <div class="col-md-9">
+              <input class="form-control" placeholder="Product Name" id="product_name" name="product_name">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-md-3 control-label">Initial Inventory</label>
+            <div class="col-md-9">
+              <input type="number" class="form-control" id="initial_inventory" name="initial_inventory">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-md-3 control-label">Price</label>
+            <div class="col-md-9">
+              <input class="form-control" id="price" name="price">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-md-3 control-label">Order Cost</label>
+            <div class="col-md-9">
+              <input class="form-control" id="order_cost" name="order_cost">
+            </div>
+          </div>
+
+        <h2>Demand Distribution</h2>
+
+          <div class="form-group">
+            <label class="col-md-3 control-label">Select Distribution</label>
+            <div class="col-md-9">
+              <select class="form-control" id="demand_dist" name="demand_dist">
+                <option>Normal</option>
+                <option>Triangular</option>
+                <option>Constant</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" id="dp1_group">
+            <label class="col-md-3 control-label" id="demandlabel_p1">Mu</label>
+            <div class="col-md-9">
+              <input class="form-control" id="demand_p1" name="demand_p1">
+            </div>
+          </div>
+
+          <div class="form-group" id="dp2_group">
+            <label class="col-md-3 control-label" id="demandlabel_p2">Sigma</label>
+            <div class="col-md-9">
+              <input class="form-control" id="demand_p2" name="demand_p2">
+            </div>
+          </div>
+
+          <div class="form-group hidden" id="dp3_group">
+            <label class="col-md-3 control-label" id="demandlabel_p3"></label>
+            <div class="col-md-9">
+              <input class="form-control" id="demand_p3" name="demand_p3">
+            </div>
+          </div>
+
+        <h2>Lead Time Distribution</h2>
+
+          <div class="form-group">
+            <label class="col-md-3 control-label">Select Distribution</label>
+            <div class="col-md-9">
+              <select class="form-control" id="leadtime_dist" name="leadtime_dist">
+                <option>Normal</option>
+                <option>Triangular</option>
+                <option>Constant</option>
+              </select>
+            </div>
+          </div>
+
+         <div class="form-group" id="lp1_group">
+            <label class="col-md-3 control-label" id="leadtimelabel_p1">Mu</label>
+            <div class="col-md-9">
+              <input class="form-control" id="leadtime_p1" name="leadtime_p1">
+            </div>
+          </div>
+
+          <div class="form-group" id="lp2_group">
+            <label class="col-md-3 control-label" id="leadtimelabel_p2">Sigma</label>
+            <div class="col-md-9">
+              <input class="form-control" id="leadtime_p2" name="leadtime_p2">
+            </div>
+          </div>
+
+          <div class="form-group hidden" id="lp3_group">
+            <label class="col-md-3 control-label" id="leadtimelabel_p3"></label>
+            <div class="col-md-9">
+              <input class="form-control" id="leadtime_p3" name="leadtime_p3">
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary" id="save_product">Save changes</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

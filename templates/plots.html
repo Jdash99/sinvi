@@ -1,20 +1,6 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-
-{% macro with_errors(field) %}
-    <div class="form_field">
-    {% if field.errors %}
-        {% set css_class = 'has_error ' + kwargs.pop('class', '') %}
-        {{ field(class=css_class, **kwargs) }}
-          {% for error in field.errors %}
-            <p class="errors">{{ error|e }}</p>
-          {% endfor %}
-        </ul>
-    {% else %}
-        {{ field(**kwargs) }}
-    {% endif %}
-    </div>
-{% endmacro %}
+{% include 'add_product.html' %}
 
 {% block title %}Plots{% endblock %}
 
@@ -29,45 +15,64 @@
       <!-- Form -->
     <div id="parameters">
       <form id="parametersForm" class="form-horizontal" role="form" method="POST">
-        {{ form.hidden_tag() }}
 
+        <!-- Product --> 
         <div class="form-group">
-          {{ form.periods.label(class="col-md-3 control-label") }} 
+          <label class="col-md-3 control-label">Product</label>
+          <div class="col-md-6">
+            <select class="form-control" id="product">
+              <option>Example Product</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <div class="row">
+              <button type="button" class="btn btn-submit" data-toggle="modal" data-target="#myModal">
+                <span class="glyphicon glyphicon-plus-sign"></span>
+              </button>
+              <button type="button" class="btn btn-danger" data-toggle="modal" id="delete">
+                <span class="glyphicon glyphicon-minus-sign"></span>
+              </button>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Periods -->
+        <div class="form-group">
+          <label class="col-md-3 control-label">Periods</label>
           <div class="col-md-9">
-            {{ with_errors(form.periods, class="form-control", placeholder="Set the number of periods") }}
+            <input class="form-control" placeholder="Set the number of periods" id="periods" name="periods">
           </div>
         </div>
 
         <div class='form-group'>
-          {{ form.policy.label(class="col-md-3 control-label") }}
+          <label class="col-md-3 control-label">Policy</label>
           <div class="col-md-9">
             <div class="form-group row">
               <div class="col-md-4 policy-btn">
-                {{ form.policy(class="form-control input") }}
+                <select class="form-control" id="policy">
+                  <option>Qs</option>
+                  <option>RS</option>
+                </select>
               </div>
               <div class='col-md-4 policy-btn'>
-                {{ form.p1.label(class="sr-only") }} 
-                {{ with_errors(form.p1, class="form-control", placeholder="Q") }}
+                <label class="sr-only"></label>
+                <input class="form-control" placeholder="Q" id="p1" name="p1">
               </div>
               <div class='col-md-4 policy-btn'>
-                {{ form.p2.label(class="sr-only") }} 
-                {{ with_errors(form.p2, class="form-control", placeholder="s") }}         
+                <label class="sr-only"></label>
+                <input class="form-control" placeholder="s" id="p2" name="p2"> 
               </div>
             </div>
           </div>
         </div>
 
-<!--         <div class="form-group">
-          <div class="col-md-offset-3 col-md-4">
-            {{ form.submit(class="btn btn-default") }}
-          </div>
-        </div> -->
-
+        <!-- Simulate btn -->
         <div class="form-group">
           <div class="col-md-3">
           </div>
           <div class="col-md-4">
-            {{ form.submit(class="btn btn-submit") }}
+            <button type="submit" class="btn btn-submit">Simulate</button>
           </div>
         </div>
 
@@ -98,5 +103,5 @@
 
 {% block scripts %}
   {{super()}} 
-  <script src="{{url_for('static', filename='js/step.js')}}"></script>
+  <script src="{{url_for('static', filename='js/plot.js')}}"></script>
 {% endblock %}

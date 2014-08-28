@@ -143,6 +143,7 @@ d3.select("#pieContainer").style("stroke-width", 5);
 
 $("#parametersForm").on('submit', function(){
 
+  var product = $('#product').val();
 	var periods = $('#periods').val();
 	var policy = $('#policy').val();
 	var p1 = $('#p1').val();
@@ -150,7 +151,7 @@ $("#parametersForm").on('submit', function(){
 	$.ajax({
 		type : "POST",
 		url : '/plot',
-		data: JSON.stringify({"policy":policy, "periods":periods, "p1": p1, "p2": p2}),
+		data: JSON.stringify({'product':product, "policy":policy, "periods":periods, "p1": p1, "p2": p2}),
 		dataType:"json",
 		contentType: 'application/json',
 		success: function(data) {

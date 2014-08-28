@@ -1,75 +1,179 @@
+import os
 import json
 import numpy as np
-from flask import Flask, render_template, session, redirect, url_for, request
-from flask.ext.script import Manager
+from flask import Flask, render_template, request
+from flask.ext.script import Manager, Shell
 from flask.ext.bootstrap import Bootstrap
-from flask.ext.wtf import Form
-from wtforms import SelectField, IntegerField, SubmitField
-from wtforms.validators import NumberRange
-from functions import Product, make_data, make_distribution, build_formatters
+from functions import make_data, make_distribution
+from flask.ext.sqlalchemy import SQLAlchemy
+from sqlalchemy.orm.exc import NoResultFound
+from pandas import DataFrame
+
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'hard to guess string'
+app.config['SQLALCHEMY_DATABASE_URI'] =\
+    'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 manager = Manager(app)
 bootstrap = Bootstrap(app)
+db = SQLAlchemy(app)
 
 
-# This is an example product, but the idea is to create your own products with
-# different demand and lead time distributions. Not implemented yet...
-example_product = Product(name="Product_A",
-                          demand_dist=make_distribution(
-                              np.random.normal, 8000, 1000),
-                          lead_time_dist=make_distribution(
-                              np.random.triangular, 0, 1, 2),
-                          initial_inventory=24000,
-                          price=8,
-                          ord_cost=200)
+class ProductDB(db.Model):
+    __tablename__ = 'products'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64))
+    price = db.Column(db.Float)
+    order_cost = db.Column(db.Float)
+    initial_inventory = db.Column(db.Integer)
+    demand_dist = db.Column(db.String())
+    demand_p1 = db.Column(db.Float)
+    demand_p2 = db.Column(db.Float)
+    demand_p3 = db.Column(db.Float)
+    leadtime_dist = db.Column(db.String())
+    leadtime_p1 = db.Column(db.Float)
+    leadtime_p2 = db.Column(db.Float)
+    leadtime_p3 = db.Column(db.Float)
 
+    @staticmethod
+    def all():
+        return ProductDB.query.all()
 
-class ParametersForm(Form):
-    periods = IntegerField('Periods', validators=[
-        NumberRange(min=1, message="This number must be greater than zero")])
-    policy = SelectField('Policy',
-                         choices=[("Qs", "Qs"), ("RS", "RS")],
-                         default="Qs")
-    p1 = IntegerField('p1', validators=[
-        NumberRange(min=1, message="This number must be greater than zero")])
-    p2 = IntegerField('p2', validators=[
-        NumberRange(min=1, message="This number must be greater than zero")])
-    submit = SubmitField('Submit')
+    @staticmethod
+    def get_all_names():
+        product_list = db.session.query(ProductDB.id, ProductDB.name).all()
+        return [{"pk": pk, "pname": pname} for pk, pname in product_list]
+
+    @staticmethod
+    def get_product(name):
+        try:
+            item = db.session.query(ProductDB).filter(
+                ProductDB.name == name).one()
+        except NoResultFound:
+            print "Product not found"
+            return None
+        return item
+
+    def demand(self):
+        if self.demand_dist == "Constant":
+            return self.demand_p1
+        elif self.demand_dist == "Normal":
+            return make_distribution(
+                np.random.normal,
+                self.demand_p1,
+                self.demand_p2)()
+        elif self.demand_dist == "Triangular":
+            return make_distribution(
+                np.random_triangular,
+                self.demand_p1,
+                self.demand_p2,
+                self.demand_p3
+                )()
+
+    def lead_time(self):
+        if self.leadtime_dist == "Constant":
+            return self.leadtime_p1
+        elif self.leadtime_dist == "Normal":
+            return make_distribution(
+                np.random.normal,
+                self.leadtime_p1,
+                self.leadtime_p2)()
+        if self.leadtime_dist == "Triangular":
+            return make_distribution(
+                np.random.triangular,
+                self.leadtime_p1,
+                self.leadtime_p2,
+                self.leadtime_p3
+                )()
+
+    def __repr__(self):
+        return '<Product %r>' % self.name
 
 
 # Define our URLs and pages.
 @app.route('/', methods=['GET', 'POST'])
 def render_plot():
-    form = ParametersForm()
-    return render_template('plots.html', form=form)
+    return render_template('plots.html')
+
+
+def clean(value):
+    try:
+        cleaned = float(value)
+    except ValueError:
+        cleaned = 0
+    return cleaned
+
+
+@app.route('/populate_select', methods=["GET", 'POST'])
+def populate_select():
+    return json.dumps(ProductDB.get_all_names())
+
+
+@app.route('/delete_product', methods=["GET", 'POST'])
+def delete_product():
+    data = request.get_json()
+    item = ProductDB.get_product(data['pname'])
+    if item:
+        db.session.delete(item)
+        db.session.commit()
+    result = {}
+    return json.dumps(result), 200
+
+
+@app.route('/save_product', methods=['GET', 'POST'])
+def save_product():
+    pdata = request.get_json()
+    print(pdata)
+    product = ProductDB(
+        name=pdata['name'],
+        price=clean(pdata['price']),
+        order_cost=clean(pdata['order_cost']),
+        initial_inventory=clean(pdata['initial_inventory']),
+        demand_dist=pdata['demand_dist'],
+        demand_p1=clean(pdata['demand_p1']),
+        demand_p2=clean(pdata['demand_p2']),
+        demand_p3=clean(pdata['demand_p3']),
+        leadtime_dist=pdata['leadtime_dist'],
+        leadtime_p1=clean(pdata['leadtime_p1']),
+        leadtime_p2=clean(pdata['leadtime_p2']),
+        leadtime_p3=clean(pdata['leadtime_p3']),
+        )
+    db.session.add(product)
+    db.session.commit()
+    result = {}
+    return json.dumps(result), 200
 
 
 @app.route('/plot', methods=['GET', 'POST'])
 def plot():
     if request.method == "POST":
         data = request.get_json()
-        policy = data['policy']
-        periods = int(data['periods'])
-        p1 = int(data['p1'])
-        p2 = int(data['p2'])
-        product_A = Product(name="Product_A",
-                            demand_dist=8000,
-                            lead_time_dist=1,
-                            initial_inventory=24000,
-                            price=18,
-                            ord_cost=200)
+        if data['product'] == "Example Product":
+            header = ['IIP', 'INI', 'D', 'FIP',
+                      'FNI', 'LS', 'AVG', 'ORD', 'LT']
+            df_A = DataFrame(index=np.arange(52), columns=header).fillna(1)
+            price = 18
+            order_cost = 200
+        else:
+            product_A = ProductDB.get_product(data['product'])
+            policy = data['policy']
+            periods = int(data['periods'])
+            p1 = int(data['p1'])
+            p2 = int(data['p2'])
 
-        df_A = make_data(product_A,
-                         policy={'method': policy,
-                                 'param1': p1,
-                                 'param2': p2},
-                         periods=periods)
+            df_A = make_data(product_A,
+                             policy={'method': policy,
+                                     'param1': p1,
+                                     'param2': p2},
+                             periods=periods)
+            price = product_A.price
+            order_cost = product_A.order_cost
 
-        carrying_costs = int(df_A['AVG'].sum() * product_A.price * (0.21/52))
-        stock_out_costs = int(df_A['LS'].sum() * product_A.price)
-        ordering_costs = int(df_A.ORD[df_A.ORD > 0].count() * product_A.ord_cost)
+        carrying_costs = int(df_A['AVG'].sum() * price * (0.21/52))
+        stock_out_costs = int(df_A['LS'].sum() * price)
+        ordering_costs = int(df_A.ORD[df_A.ORD > 0].count() * order_cost)
         step_data = [{"PERIOD": int(x), "FIP": int(y)} for x, y in zip(df_A.index, df_A["FIP"])]
 
         pie_data = [{"TipoCosto": "Carrying", "Costo": carrying_costs},
@@ -78,6 +182,14 @@ def plot():
 
         data = [step_data, pie_data]
         return json.dumps(data)
+
+
+def make_shell_context():
+    return dict(
+        app=app, db=db,
+        Product=ProductDB)
+
+manager.add_command("shell", Shell(make_context=make_shell_context))
 
 if __name__ == '__main__':
     manager.run()
