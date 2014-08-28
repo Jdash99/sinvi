@@ -2,6 +2,14 @@ import numpy as np
 from pandas import DataFrame
 
 
+def clean(value):
+    try:
+        cleaned = float(value)
+    except ValueError:
+        cleaned = 0
+    return cleaned
+
+
 class Order(object):
     """Object that stores basic data of an order"""
 

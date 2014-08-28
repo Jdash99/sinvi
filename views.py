@@ -1,109 +1,19 @@
-import os
+from flask import render_template, request
+from flask.ext.script import Shell
+
+from pandas import DataFrame
 import json
 import numpy as np
-from flask import Flask, render_template, request
-from flask.ext.script import Manager, Shell
-from flask.ext.bootstrap import Bootstrap
-from functions import make_data, make_distribution
-from flask.ext.sqlalchemy import SQLAlchemy
-from sqlalchemy.orm.exc import NoResultFound
-from pandas import DataFrame
 
-basedir = os.path.abspath(os.path.dirname(__file__))
-
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'hard to guess string'
-app.config['SQLALCHEMY_DATABASE_URI'] =\
-    'sqlite:///' + os.path.join(basedir, 'data.sqlite')
-app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
-manager = Manager(app)
-bootstrap = Bootstrap(app)
-db = SQLAlchemy(app)
-
-
-class ProductDB(db.Model):
-    __tablename__ = 'products'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64))
-    price = db.Column(db.Float)
-    order_cost = db.Column(db.Float)
-    initial_inventory = db.Column(db.Integer)
-    demand_dist = db.Column(db.String())
-    demand_p1 = db.Column(db.Float)
-    demand_p2 = db.Column(db.Float)
-    demand_p3 = db.Column(db.Float)
-    leadtime_dist = db.Column(db.String())
-    leadtime_p1 = db.Column(db.Float)
-    leadtime_p2 = db.Column(db.Float)
-    leadtime_p3 = db.Column(db.Float)
-
-    @staticmethod
-    def all():
-        return ProductDB.query.all()
-
-    @staticmethod
-    def get_all_names():
-        product_list = db.session.query(ProductDB.id, ProductDB.name).all()
-        return [{"pk": pk, "pname": pname} for pk, pname in product_list]
-
-    @staticmethod
-    def get_product(name):
-        try:
-            item = db.session.query(ProductDB).filter(
-                ProductDB.name == name).one()
-        except NoResultFound:
-            print "Product not found"
-            return None
-        return item
-
-    def demand(self):
-        if self.demand_dist == "Constant":
-            return self.demand_p1
-        elif self.demand_dist == "Normal":
-            return make_distribution(
-                np.random.normal,
-                self.demand_p1,
-                self.demand_p2)()
-        elif self.demand_dist == "Triangular":
-            return make_distribution(
-                np.random_triangular,
-                self.demand_p1,
-                self.demand_p2,
-                self.demand_p3
-                )()
-
-    def lead_time(self):
-        if self.leadtime_dist == "Constant":
-            return self.leadtime_p1
-        elif self.leadtime_dist == "Normal":
-            return make_distribution(
-                np.random.normal,
-                self.leadtime_p1,
-                self.leadtime_p2)()
-        if self.leadtime_dist == "Triangular":
-            return make_distribution(
-                np.random.triangular,
-                self.leadtime_p1,
-                self.leadtime_p2,
-                self.leadtime_p3
-                )()
-
-    def __repr__(self):
-        return '<Product %r>' % self.name
+from config import *
+from models import *
+from functions import make_data
 
 
 # Define our URLs and pages.
 @app.route('/', methods=['GET', 'POST'])
 def render_plot():
     return render_template('plots.html')
-
-
-def clean(value):
-    try:
-        cleaned = float(value)
-    except ValueError:
-        cleaned = 0
-    return cleaned
 
 
 @app.route('/populate_select', methods=["GET", 'POST'])
