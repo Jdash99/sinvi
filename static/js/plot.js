@@ -7,12 +7,11 @@ for (var i = 1; i < 50; i ++) {
 var svg = dimple.newSvg("#stepContainer", 510, 300);
 var stepChart = new dimple.chart(svg, start_data);
 stepChart.setBounds(60, 50, 475, 205);
-var xAxis = stepChart.addCategoryAxis("x", "PERIOD");
+var xAxis = stepChart.addMeasureAxis("x", "PERIOD");
 var yAxis = stepChart.addMeasureAxis("y", "FIP");
-var s = stepChart.addSeries(null, dimple.plot.line);
+var s = stepChart.addSeries("PERIOD",dimple.plot.line);
 s.interpolation = "step";
 
-stepChart.addLegend(60, 10, 300, 20, "right");
 xAxis.fontFamily = "Ubuntu";
 yAxis.fontFamily = "Ubuntu";
 xAxis.fontSize = 12;

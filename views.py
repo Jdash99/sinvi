@@ -7,7 +7,7 @@ import numpy as np
 
 from config import *
 from models import *
-from functions import make_data
+from functions import make_data, clean
 
 
 # Define our URLs and pages.
