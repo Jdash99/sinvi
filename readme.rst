@@ -19,7 +19,7 @@ Como usar?
 
 Prueba el demo en:
 
-.. https://nsinvi.herokuapp.com/
+`Demo <https://nsinvi.herokuapp.com/>`_
 
 O Clona este repo y ejecuta localmente:
 ::
