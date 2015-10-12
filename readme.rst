@@ -25,9 +25,9 @@ Clona este repo y ejecuta:
 	python views.py runserver
 	* Running on http://localhost:5000/
 
-# TODO
+TODO
+=====
 
-- Permitir al usuario crear productos con diferentes distribuciones de demanda y lead time.
 - Agregar más políticas (Ss, RSs)
 - Mejorar los tests
-- Mostrar un resumen de los costos incurridos en la política seleccionada
+- Mejorar la documentación
