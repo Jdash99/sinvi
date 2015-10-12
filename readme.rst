@@ -12,14 +12,12 @@ Resumen
 
 SinVi es una pequeña aplicación web para la simulación de políticas de inventario.
 
+.. image:: http://imgur.com/aC199gO.gif
+
 Como usar?
 ==========
 
-Ir al demo en:
-
-http://sinvi-app.herokuapp.com/
-
-O puedes clonar este repo y ejecutar:
+Clona este repo y ejecuta:
 ::
 	git clone git://github.com/Jdash99/sinvi.git
 	cd sinvi

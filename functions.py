@@ -75,7 +75,7 @@ def make_data(product, policy, periods):
             else:
                 df['D'][period] = 0
 
-            # We can't have negativa IIP
+            # We can't have negative IIP
             if df['IIP'][period] - df['D'][period] < 0:
                 df['FIP'][period] = 0
             else:
