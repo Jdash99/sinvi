@@ -1,11 +1,12 @@
 Flask
 Flask-Bootstrap
-green
-bokeh==0.5.1
+SQLAlchemy
+flask-sqlalchemy
+flask-script
 numpy
 pandas
-flask-script
 Flask-WTF
 gunicorn
 Jinja2
 Werkzeug
+green
