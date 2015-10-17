@@ -2,11 +2,23 @@
  * BootstrapValidator (http://bootstrapvalidator.com)
  * The best jQuery plugin to validate form fields. Designed to use with Bootstrap 3
  *
- * @version     v0.5.1, built on 2014-08-22 4:55:09 PM
+ * @version     v0.5.3, built on 2014-11-05 9:14:18 PM
  * @author      https://twitter.com/nghuuphuoc
  * @copyright   (c) 2013 - 2014 Nguyen Huu Phuoc
- * @license     MIT
+ * @license     Commercial: http://bootstrapvalidator.com/license/
+ *              Non-commercial: http://creativecommons.org/licenses/by-nc-nd/3.0/
  */
+if (typeof jQuery === 'undefined') {
+    throw new Error('BootstrapValidator requires jQuery');
+}
+
+(function($) {
+    var version = $.fn.jquery.split(' ')[0].split('.');
+    if ((+version[0] < 2 && +version[1] < 9) || (+version[0] === 1 && +version[1] === 9 && +version[2] < 1)) {
+        throw new Error('BootstrapValidator requires jQuery version 1.9.1 or higher');
+    }
+}(window.jQuery));
+
 (function($) {
     var BootstrapValidator = function(form, options) {
         this.$form   = $(form);
@@ -54,22 +66,8 @@
         _init: function() {
             var that    = this,
                 options = {
-                    excluded:       this.$form.attr('data-bv-excluded'),
-                    trigger:        this.$form.attr('data-bv-trigger'),
-                    message:        this.$form.attr('data-bv-message'),
+                    autoFocus:      this.$form.attr('data-bv-autofocus'),
                     container:      this.$form.attr('data-bv-container'),
-                    group:          this.$form.attr('data-bv-group'),
-                    submitButtons:  this.$form.attr('data-bv-submitbuttons'),
-                    threshold:      this.$form.attr('data-bv-threshold'),
-                    live:           this.$form.attr('data-bv-live'),
-                    onSuccess:      this.$form.attr('data-bv-onsuccess'),
-                    onError:        this.$form.attr('data-bv-onerror'),
-                    fields:         {},
-                    feedbackIcons: {
-                        valid:      this.$form.attr('data-bv-feedbackicons-valid'),
-                        invalid:    this.$form.attr('data-bv-feedbackicons-invalid'),
-                        validating: this.$form.attr('data-bv-feedbackicons-validating')
-                    },
                     events: {
                         formInit:         this.$form.attr('data-bv-events-form-init'),
                         formError:        this.$form.attr('data-bv-events-form-error'),
@@ -82,7 +80,23 @@
                         fieldStatus:      this.$form.attr('data-bv-events-field-status'),
                         validatorError:   this.$form.attr('data-bv-events-validator-error'),
                         validatorSuccess: this.$form.attr('data-bv-events-validator-success')
-                    }
+                    },
+                    excluded:       this.$form.attr('data-bv-excluded'),
+                    feedbackIcons: {
+                        valid:      this.$form.attr('data-bv-feedbackicons-valid'),
+                        invalid:    this.$form.attr('data-bv-feedbackicons-invalid'),
+                        validating: this.$form.attr('data-bv-feedbackicons-validating')
+                    },
+                    group:          this.$form.attr('data-bv-group'),
+                    live:           this.$form.attr('data-bv-live'),
+                    message:        this.$form.attr('data-bv-message'),
+                    onError:        this.$form.attr('data-bv-onerror'),
+                    onSuccess:      this.$form.attr('data-bv-onsuccess'),
+                    submitButtons:  this.$form.attr('data-bv-submitbuttons'),
+                    threshold:      this.$form.attr('data-bv-threshold'),
+                    trigger:        this.$form.attr('data-bv-trigger'),
+                    verbose:        this.$form.attr('data-bv-verbose'),
+                    fields:         {}
                 };
 
             this.$form
@@ -124,11 +138,17 @@
 
             this.$form
                 .on('click.bv', '[type="submit"]', function(e) {
-                    // Don't perform validation when clicking on the submit button/input
-                    // which aren't defined by the 'submitButtons' option
-                    var $button = $(e.target).eq(0);
-                    if (that.options.submitButtons && !$button.is(that.options.submitButtons) && !$button.is(that.$hiddenButton)) {
-                        that.$form.off('submit.bv').submit();
+                    // #746: Check if the button click handler returns false
+                    if (!e.isDefaultPrevented()) {
+                        var $target = $(e.target),
+                            // The button might contain HTML tag
+                            $button = $target.is('[type="submit"]') ? $target.eq(0) : $target.parent('[type="submit"]').eq(0);
+
+                        // Don't perform validation when clicking on the submit button/input
+                        // which aren't defined by the 'submitButtons' option
+                        if (that.options.submitButtons && !$button.is(that.options.submitButtons) && !$button.is(that.$hiddenButton)) {
+                            that.$form.off('submit.bv').submit();
+                        }
                     }
                 });
 
@@ -165,19 +185,22 @@
                 validators = {},
                 validator,
                 v,          // Validator name
+                attrName,
                 enabled,
                 optionName,
+                optionAttrName,
                 optionValue,
                 html5AttrName,
                 html5AttrMap;
 
             for (v in $.fn.bootstrapValidator.validators) {
                 validator    = $.fn.bootstrapValidator.validators[v];
-                enabled      = $field.attr('data-bv-' + v.toLowerCase()) + '';
+                attrName     = 'data-bv-' + v.toLowerCase(),
+                enabled      = $field.attr(attrName) + '';
                 html5AttrMap = ('function' === typeof validator.enableByHtml5) ? validator.enableByHtml5($field) : null;
 
                 if ((html5AttrMap && enabled !== 'false')
-                    || (html5AttrMap !== true && ('' === enabled || 'true' === enabled)))
+                    || (html5AttrMap !== true && ('' === enabled || 'true' === enabled || attrName === enabled.toLowerCase())))
                 {
                     // Try to parse the options via attributes
                     validator.html5Attributes = $.extend({}, { message: 'message', onerror: 'onError', onsuccess: 'onSuccess' }, validator.html5Attributes);
@@ -185,9 +208,10 @@
 
                     for (html5AttrName in validator.html5Attributes) {
                         optionName  = validator.html5Attributes[html5AttrName];
-                        optionValue = $field.attr('data-bv-' + v.toLowerCase() + '-' + html5AttrName);
+                        optionAttrName = 'data-bv-' + v.toLowerCase() + '-' + html5AttrName,
+                        optionValue = $field.attr(optionAttrName);
                         if (optionValue) {
-                            if ('true' === optionValue) {
+                            if ('true' === optionValue || optionAttrName === optionValue.toLowerCase()) {
                                 optionValue = true;
                             } else if ('false' === optionValue) {
                                 optionValue = false;
@@ -199,17 +223,19 @@
             }
 
             var opts = {
+                    autoFocus:     $field.attr('data-bv-autofocus'),
+                    container:     $field.attr('data-bv-container'),
                     excluded:      $field.attr('data-bv-excluded'),
                     feedbackIcons: $field.attr('data-bv-feedbackicons'),
-                    trigger:       $field.attr('data-bv-trigger'),
-                    message:       $field.attr('data-bv-message'),
-                    container:     $field.attr('data-bv-container'),
                     group:         $field.attr('data-bv-group'),
-                    selector:      $field.attr('data-bv-selector'),
-                    threshold:     $field.attr('data-bv-threshold'),
+                    message:       $field.attr('data-bv-message'),
+                    onError:       $field.attr('data-bv-onerror'),
                     onStatus:      $field.attr('data-bv-onstatus'),
                     onSuccess:     $field.attr('data-bv-onsuccess'),
-                    onError:       $field.attr('data-bv-onerror'),
+                    selector:      $field.attr('data-bv-selector'),
+                    threshold:     $field.attr('data-bv-threshold'),
+                    trigger:       $field.attr('data-bv-trigger'),
+                    verbose:       $field.attr('data-bv-verbose'),
                     validators:    validators
                 },
                 emptyOptions    = $.isEmptyObject(opts),        // Check if the field options are set using HTML attributes
@@ -243,15 +269,15 @@
                     break;
             }
 
+            // We don't need to validate non-existing fields
+            if (fields.length === 0) {
+                return;
+            }
+
             if (this.options.fields[field] === null || this.options.fields[field].validators === null) {
                 return;
             }
 
-            // We don't need to validate non-existing fields
-            if (fields.length === 0) {
-                delete this.options.fields[field];
-                return;
-            }
             var validatorName;
             for (validatorName in this.options.fields[field].validators) {
                 if (!$.fn.bootstrapValidator.validators[validatorName]) {
@@ -277,7 +303,7 @@
                     group     = this.options.fields[field].group || this.options.group,
                     $parent   = $field.parents(group),
                     // Allow user to indicate where the error messages are shown
-                    container = this.options.fields[field].container || this.options.container,
+                    container = ('function' === typeof (this.options.fields[field].container || this.options.container)) ? (this.options.fields[field].container || this.options.container).call(this, $field, this) : (this.options.fields[field].container || this.options.container),
                     $message  = (container && container !== 'tooltip' && container !== 'popover') ? $(container) : this._getMessageContainer($field, group);
 
                 if (container && container !== 'tooltip' && container !== 'popover') {
@@ -292,7 +318,7 @@
                 $field.off(events).on(events, function() {
                     that.updateStatus($(this), that.STATUS_NOT_VALIDATED);
                 });
-
+                
                 // Create help block elements for showing the error messages
                 $field.data('bv.messages', $message);
                 for (validatorName in this.options.fields[field].validators) {
@@ -309,16 +335,9 @@
                             .appendTo($message);
                     }
 
-                    // Prepare the validator events
-                    if (this.options.fields[field].validators[validatorName].onSuccess) {
-                        $field.on(this.options.events.validatorSuccess, function(e, data) {
-                             $.fn.bootstrapValidator.helpers.call(that.options.fields[field].validators[validatorName].onSuccess, [e, data]);
-                        });
-                    }
-                    if (this.options.fields[field].validators[validatorName].onError) {
-                        $field.on(this.options.events.validatorError, function(e, data) {
-                             $.fn.bootstrapValidator.helpers.call(that.options.fields[field].validators[validatorName].onError, [e, data]);
-                        });
+                    // Init the validator
+                    if ('function' === typeof $.fn.bootstrapValidator.validators[validatorName].init) {
+                        $.fn.bootstrapValidator.validators[validatorName].init(this, $field, this.options.fields[field].validators[validatorName]);
                     }
                 }
 
@@ -329,7 +348,9 @@
                     && this.options.feedbackIcons.validating && this.options.feedbackIcons.invalid && this.options.feedbackIcons.valid
                     && (!updateAll || i === total - 1))
                 {
-                    $parent.removeClass('has-success').removeClass('has-error').addClass('has-feedback');
+                    // $parent.removeClass('has-success').removeClass('has-error').addClass('has-feedback');
+                    // Keep error messages which are populated from back-end
+                    $parent.addClass('has-feedback');
                     var $icon = $('<i/>')
                                     .css('display', 'none')
                                     .addClass('form-control-feedback')
@@ -350,34 +371,88 @@
                     // The feedback icon does not render correctly if there is no label
                     // https://github.com/twbs/bootstrap/issues/12873
                     if ($parent.find('label').length === 0) {
-                        $icon.css('top', 0);
+                        $icon.addClass('bv-no-label');
                     }
                     // Fix feedback icons in input-group
                     if ($parent.find('.input-group').length !== 0) {
-                        $icon.css({
-                            'top': 0,
-                            'z-index': 100
-                        }).insertAfter($parent.find('.input-group').eq(0));
+                        $icon.addClass('bv-icon-input-group')
+                             .insertAfter($parent.find('.input-group').eq(0));
+                    }
+
+                    // Store the icon as a data of field element
+                    if (!updateAll) {
+                        $field.data('bv.icon', $icon);
+                    } else if (i === total - 1) {
+                        // All fields with the same name have the same icon
+                        fields.data('bv.icon', $icon);
+                    }
+                    
+                    if (container) {
+                        $field
+                            // Show tooltip/popover message when field gets focus
+                            .off('focus.container.bv')
+                            .on('focus.container.bv', function() {
+                                switch (container) {
+                                    case 'tooltip':
+                                        $(this).data('bv.icon').tooltip('show');
+                                        break;
+                                    case 'popover':
+                                        $(this).data('bv.icon').popover('show');
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            })
+                            // and hide them when losing focus
+                            .off('blur.container.bv')
+                            .on('blur.container.bv', function() {
+                                switch (container) {
+                                    case 'tooltip':
+                                        $(this).data('bv.icon').tooltip('hide');
+                                        break;
+                                    case 'popover':
+                                        $(this).data('bv.icon').popover('hide');
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            });
                     }
                 }
             }
 
             // Prepare the events
-            if (this.options.fields[field].onSuccess) {
-                fields.on(this.options.events.fieldSuccess, function(e, data) {
-                    $.fn.bootstrapValidator.helpers.call(that.options.fields[field].onSuccess, [e, data]);
+            fields
+                .on(this.options.events.fieldSuccess, function(e, data) {
+                    var onSuccess = that.getOptions(data.field, null, 'onSuccess');
+                    if (onSuccess) {
+                        $.fn.bootstrapValidator.helpers.call(onSuccess, [e, data]);
+                    }
+                })
+                .on(this.options.events.fieldError, function(e, data) {
+                    var onError = that.getOptions(data.field, null, 'onError');
+                    if (onError) {
+                        $.fn.bootstrapValidator.helpers.call(onError, [e, data]);
+                    }
+                })
+                .on(this.options.events.fieldStatus, function(e, data) {
+                    var onStatus = that.getOptions(data.field, null, 'onStatus');
+                    if (onStatus) {
+                        $.fn.bootstrapValidator.helpers.call(onStatus, [e, data]);
+                    }
+                })
+                .on(this.options.events.validatorError, function(e, data) {
+                    var onError = that.getOptions(data.field, data.validator, 'onError');
+                    if (onError) {
+                        $.fn.bootstrapValidator.helpers.call(onError, [e, data]);
+                    }
+                })
+                .on(this.options.events.validatorSuccess, function(e, data) {
+                    var onSuccess = that.getOptions(data.field, data.validator, 'onSuccess');
+                    if (onSuccess) {
+                        $.fn.bootstrapValidator.helpers.call(onSuccess, [e, data]);
+                    }
                 });
-            }
-            if (this.options.fields[field].onError) {
-                fields.on(this.options.events.fieldError, function(e, data) {
-                    $.fn.bootstrapValidator.helpers.call(that.options.fields[field].onError, [e, data]);
-                });
-            }
-            if (this.options.fields[field].onStatus) {
-                fields.on(this.options.events.fieldStatus, function(e, data) {
-                    $.fn.bootstrapValidator.helpers.call(that.options.fields[field].onStatus, [e, data]);
-                });
-            }
 
             // Set live mode
             events = $.map(trigger, function(item) {
@@ -581,16 +656,21 @@
                 }
             }
 
-            var $invalidField = this.$invalidFields.eq(0);
-            if ($invalidField) {
-                // Activate the tab containing the invalid field if exists
-                var $tabPane = $invalidField.parents('.tab-pane'), tabId;
-                if ($tabPane && (tabId = $tabPane.attr('id'))) {
-                    $('a[href="#' + tabId + '"][data-toggle="tab"]').tab('show');
-                }
+            // Determined the first invalid field which will be focused on automatically
+            for (var i = 0; i < this.$invalidFields.length; i++) {
+                var $field    = this.$invalidFields.eq(i),
+                    autoFocus = this._isOptionEnabled($field.attr('data-bv-field'), 'autoFocus');
+                if (autoFocus) {
+                    // Activate the tab containing the field if exists
+                    var $tabPane = $field.parents('.tab-pane'), tabId;
+                    if ($tabPane && (tabId = $tabPane.attr('id'))) {
+                        $('a[href="#' + tabId + '"][data-toggle="tab"]').tab('show');
+                    }
 
-                // Focus to the first invalid field
-                $invalidField.focus();
+                    // Focus the field
+                    $field.focus();
+                    break;
+                }
             }
         },
 
@@ -624,7 +704,8 @@
                     bv: this,
                     field: field,
                     element: $field,
-                    validator: validatorName
+                    validator: validatorName,
+                    result: $field.data('bv.response.' + validatorName)
                 };
 
             // Trigger an event after given validator completes
@@ -665,12 +746,29 @@
                 $field.trigger($.Event(this.options.events.fieldSuccess), data);
             }
             // If all validators are completed and there is at least one validator which doesn't pass
-            else if (counter[this.STATUS_NOT_VALIDATED] === 0 && counter[this.STATUS_VALIDATING] === 0 && counter[this.STATUS_INVALID] > 0) {
+            else if ((counter[this.STATUS_NOT_VALIDATED] === 0 || !this._isOptionEnabled(field, 'verbose')) && counter[this.STATUS_VALIDATING] === 0 && counter[this.STATUS_INVALID] > 0) {
                 // Add to the list of invalid fields
                 this.$invalidFields = this.$invalidFields.add($field);
 
                 $field.trigger($.Event(this.options.events.fieldError), data);
             }
+        },
+
+        /**
+         * Check whether or not a field option is enabled
+         *
+         * @param {String} field The field name
+         * @param {String} option The option name, "verbose", "autoFocus", for example
+         * @returns {Boolean}
+         */
+        _isOptionEnabled: function(field, option) {
+            if (this.options.fields[field] && (this.options.fields[field][option] === 'true' || this.options.fields[field][option] === true)) {
+                return true;
+            }
+            if (this.options.fields[field] && (this.options.fields[field][option] === 'false' || this.options.fields[field][option] === false)) {
+                return false;
+            }
+            return this.options[option] === 'true' || this.options[option] === true;
         },
 
         // ---
@@ -691,6 +789,36 @@
             }
 
             return this._cacheFields[field];
+        },
+
+        /**
+         * Get the field options
+         *
+         * @param {String|jQuery} [field] The field name or field element. If it is not set, the method returns the form options
+         * @param {String} [validator] The name of validator. It null, the method returns form options
+         * @param {String} [option] The option name
+         * @return {String|Object}
+         */
+        getOptions: function(field, validator, option) {
+            if (!field) {
+                return option ? this.options[option] : this.options;
+            }
+            if ('object' === typeof field) {
+                field = field.attr('data-bv-field');
+            }
+            if (!this.options.fields[field]) {
+                return null;
+            }
+
+            var options = this.options.fields[field];
+            if (!validator) {
+                return option ? options[option] : options;
+            }
+            if (!options.validators || !options.validators[validator]) {
+                return null;
+            }
+
+            return option ? options.validators[validator][option] : options.validators[validator];
         },
 
         /**
@@ -721,11 +849,13 @@
             }
             this.disableSubmitButtons(true);
 
+            this._submitIfValid = false;
             for (var field in this.options.fields) {
                 this.validateField(field);
             }
 
             this._submit();
+            this._submitIfValid = true;
 
             return this;
         },
@@ -750,7 +880,7 @@
                     break;
             }
 
-            if (this.options.fields[field] && this.options.fields[field].enabled === false) {
+            if (fields.length === 0 || !this.options.fields[field] || this.options.fields[field].enabled === false) {
                 return this;
             }
 
@@ -759,6 +889,7 @@
                 total      = ('radio' === type || 'checkbox' === type) ? 1 : fields.length,
                 updateAll  = ('radio' === type || 'checkbox' === type),
                 validators = this.options.fields[field].validators,
+                verbose    = this._isOptionEnabled(field, 'verbose'),
                 validatorName,
                 validateResult;
 
@@ -768,15 +899,22 @@
                     continue;
                 }
 
+                var stop = false;
                 for (validatorName in validators) {
                     if ($field.data('bv.dfs.' + validatorName)) {
                         $field.data('bv.dfs.' + validatorName).reject();
                     }
+                    if (stop) {
+                        break;
+                    }
 
                     // Don't validate field if it is already done
                     var result = $field.data('bv.result.' + validatorName);
-                    if (result === this.STATUS_VALID || result === this.STATUS_INVALID || validators[validatorName].enabled === false) {
+                    if (result === this.STATUS_VALID || result === this.STATUS_INVALID) {
                         this._onFieldValidated($field, validatorName);
+                        continue;
+                    } else if (validators[validatorName].enabled === false) {
+                        this.updateStatus(updateAll ? field : $field, this.STATUS_VALID, validatorName);
                         continue;
                     }
 
@@ -788,29 +926,39 @@
                         this.updateStatus(updateAll ? field : $field, this.STATUS_VALIDATING, validatorName);
                         $field.data('bv.dfs.' + validatorName, validateResult);
 
-                        validateResult.done(function($f, v, isValid, message) {
+                        validateResult.done(function($f, v, response) {
                             // v is validator name
-                            $f.removeData('bv.dfs.' + v);
-                            if (message) {
-                                that.updateMessage($f, v, message);
+                            $f.removeData('bv.dfs.' + v).data('bv.response.' + v, response);
+                            if (response.message) {
+                                that.updateMessage($f, v, response.message);
                             }
 
-                            that.updateStatus(updateAll ? $f.attr('data-bv-field') : $f, isValid ? that.STATUS_VALID : that.STATUS_INVALID, v);
+                            that.updateStatus(updateAll ? $f.attr('data-bv-field') : $f, response.valid ? that.STATUS_VALID : that.STATUS_INVALID, v);
 
-                            if (isValid && that._submitIfValid === true) {
+                            if (response.valid && that._submitIfValid === true) {
                                 // If a remote validator returns true and the form is ready to submit, then do it
                                 that._submit();
+                            } else if (!response.valid && !verbose) {
+                                stop = true;
                             }
                         });
                     }
                     // ... or object { valid: true/false, message: 'dynamic message' }
                     else if ('object' === typeof validateResult && validateResult.valid !== undefined && validateResult.message !== undefined) {
+                        $field.data('bv.response.' + validatorName, validateResult);
                         this.updateMessage(updateAll ? field : $field, validatorName, validateResult.message);
                         this.updateStatus(updateAll ? field : $field, validateResult.valid ? this.STATUS_VALID : this.STATUS_INVALID, validatorName);
+                        if (!validateResult.valid && !verbose) {
+                            break;
+                        }
                     }
                     // ... or a boolean value
                     else if ('boolean' === typeof validateResult) {
+                        $field.data('bv.response.' + validatorName, validateResult);
                         this.updateStatus(updateAll ? field : $field, validateResult ? this.STATUS_VALID : this.STATUS_INVALID, validatorName);
+                        if (!validateResult && !verbose) {
+                            break;
+                        }
                     }
                 }
             }
@@ -869,6 +1017,7 @@
 
             if (status === this.STATUS_NOT_VALIDATED) {
                 // Reset the flag
+                // To prevent the form from doing submit when a deferred validator returns true while typing
                 this._submitIfValid = false;
             }
 
@@ -887,8 +1036,8 @@
                     $message     = $field.data('bv.messages'),
                     $allErrors   = $message.find('.help-block[data-bv-validator][data-bv-for="' + field + '"]'),
                     $errors      = validatorName ? $allErrors.filter('[data-bv-validator="' + validatorName + '"]') : $allErrors,
-                    $icon        = $parent.find('.form-control-feedback[data-bv-icon-for="' + field + '"]'),
-                    container    = this.options.fields[field].container || this.options.container,
+                    $icon        = $field.data('bv.icon'),
+                    container    = ('function' === typeof (this.options.fields[field].container || this.options.container)) ? (this.options.fields[field].container || this.options.container).call(this, $field, this) : (this.options.fields[field].container || this.options.container),
                     isValidField = null;
 
                 // Update status
@@ -976,8 +1125,9 @@
                     case ($icon && 'tooltip' === container):
                         (isValidField === false)
                                 ? $icon.css('cursor', 'pointer').tooltip('destroy').tooltip({
+                                    container: 'body',
                                     html: true,
-                                    placement: 'top',
+                                    placement: 'auto top',
                                     title: $allErrors.filter('[data-bv-result="' + that.STATUS_INVALID + '"]').eq(0).html()
                                 })
                                 : $icon.css('cursor', '').tooltip('destroy');
@@ -986,9 +1136,10 @@
                     case ($icon && 'popover' === container):
                         (isValidField === false)
                                 ? $icon.css('cursor', 'pointer').popover('destroy').popover({
+                                    container: 'body',
                                     content: $allErrors.filter('[data-bv-result="' + that.STATUS_INVALID + '"]').eq(0).html(),
                                     html: true,
-                                    placement: 'top',
+                                    placement: 'auto top',
                                     trigger: 'hover click'
                                 })
                                 : $icon.css('cursor', '').popover('destroy');
@@ -1045,7 +1196,7 @@
                 default:
                     break;
             }
-            if (fields.length === 0 || this.options.fields[field] === null || this.options.fields[field].enabled === false) {
+            if (fields.length === 0 || !this.options.fields[field] || this.options.fields[field].enabled === false) {
                 return true;
             }
 
@@ -1100,15 +1251,9 @@
                 var $f = map[field];
                 if ($f.data('bv.messages')
                       .find('.help-block[data-bv-validator][data-bv-for="' + field + '"]')
-                      .filter(function() {
-                          var v = $(this).attr('data-bv-validator'),
-                              f = $(this).attr('data-bv-for');
-                          return (that.options.fields[f].validators[v].enabled !== false
-                                && $f.data('bv.result.' + v) && $f.data('bv.result.' + v) !== that.STATUS_VALID);
-                      })
-                      .length !== 0)
+                      .filter('[data-bv-result="' + this.STATUS_INVALID +'"]')
+                      .length > 0)
                 {
-                    // The field is not valid
                     return false;
                 }
             }
@@ -1203,36 +1348,6 @@
             });
 
             return messages;
-        },
-
-        /**
-         * Get the field options
-         *
-         * @param {String|jQuery} [field] The field name or field element. If it is not set, the method returns the form options
-         * @param {String} [validator] The name of validator. It null, the method returns form options
-         * @param {String} [option] The option name
-         * @return {String|Object}
-         */
-        getOptions: function(field, validator, option) {
-            if (!field) {
-                return this.options;
-            }
-            if ('object' === typeof field) {
-                field = field.attr('data-bv-field');
-            }
-            if (!this.options.fields[field]) {
-                return null;
-            }
-
-            var options = this.options.fields[field];
-            if (!validator) {
-                return options;
-            }
-            if (!options.validators || !options.validators[validator]) {
-                return null;
-            }
-
-            return option ? options.validators[validator][option] : options.validators[validator];
         },
 
         /**
@@ -1519,10 +1634,9 @@
          * It will remove all error messages, feedback icons and turn off the events
          */
         destroy: function() {
-            var field, fields, $field, validator, $icon, container, group;
+            var field, fields, $field, validator, $icon, group;
             for (field in this.options.fields) {
                 fields    = this.getFieldElements(field);
-                container = this.options.fields[field].container || this.options.container,
                 group     = this.options.fields[field].group || this.options.group;
                 for (var i = 0; i < fields.length; i++) {
                     $field = fields.eq(i);
@@ -1541,8 +1655,9 @@
                         .removeAttr('data-bv-field');
 
                     // Remove feedback icons, tooltip/popover container
-                    $icon = $field.parents(group).find('i[data-bv-icon-for="' + field + '"]');
+                    $icon = $field.data('bv.icon');
                     if ($icon) {
+                        var container = ('function' === typeof (this.options.fields[field].container || this.options.container)) ? (this.options.fields[field].container || this.options.container).call(this, $field, this) : (this.options.fields[field].container || this.options.container);
                         switch (container) {
                             case 'tooltip':
                                 $icon.tooltip('destroy').remove();
@@ -1555,12 +1670,20 @@
                                 break;
                         }
                     }
+                    $field.removeData('bv.icon');
 
                     for (validator in this.options.fields[field].validators) {
                         if ($field.data('bv.dfs.' + validator)) {
                             $field.data('bv.dfs.' + validator).reject();
                         }
-                        $field.removeData('bv.result.' + validator).removeData('bv.dfs.' + validator);
+                        $field.removeData('bv.result.' + validator)
+                              .removeData('bv.response.' + validator)
+                              .removeData('bv.dfs.' + validator);
+
+                        // Destroy the validator
+                        if ('function' === typeof $.fn.bootstrapValidator.validators[validator].destroy) {
+                            $.fn.bootstrapValidator.validators[validator].destroy(this, $field, this.options.fields[field].validators[validator]);
+                        }
                     }
                 }
             }
@@ -1598,17 +1721,10 @@
     };
 
     // The default options
+    // Sorted in alphabetical order
     $.fn.bootstrapValidator.DEFAULT_OPTIONS = {
-        // The form CSS class
-        elementClass: 'bv-form',
-
-        // Default invalid message
-        message: 'This value is not valid',
-
-        // The CSS selector for indicating the element consists the field
-        // By default, each field is placed inside the <div class="form-group"></div>
-        // You should adjust this option if your form group consists of many fields which not all of them need to be validated
-        group: '.form-group',
+        // The first invalid field will be focused automatically
+        autoFocus: true,
 
         //The error messages container. It can be:
         // - 'tooltip' if you want to use Bootstrap tooltip to show error messages
@@ -1618,8 +1734,24 @@
         // You also can define the message container for particular field
         container: null,
 
-        // The field will not be live validated if its length is less than this number of characters
-        threshold: null,
+        // The form CSS class
+        elementClass: 'bv-form',
+
+        // Use custom event name to avoid window.onerror being invoked by jQuery
+        // See https://github.com/nghuuphuoc/bootstrapvalidator/issues/630
+        events: {
+            formInit: 'init.form.bv',
+            formError: 'error.form.bv',
+            formSuccess: 'success.form.bv',
+            fieldAdded: 'added.field.bv',
+            fieldRemoved: 'removed.field.bv',
+            fieldInit: 'init.field.bv',
+            fieldError: 'error.field.bv',
+            fieldSuccess: 'success.field.bv',
+            fieldStatus: 'status.field.bv',
+            validatorError: 'error.validator.bv',
+            validatorSuccess: 'success.validator.bv'
+        },
 
         // Indicate fields which won't be validated
         // By default, the plugin will not validate the following kind of fields:
@@ -1670,9 +1802,13 @@
             validating: null
         },
 
-        // The submit buttons selector
-        // These buttons will be disabled to prevent the valid form from multiple submissions
-        submitButtons: '[type="submit"]',
+        // Map the field name with validator rules
+        fields: null,
+
+        // The CSS selector for indicating the element consists the field
+        // By default, each field is placed inside the <div class="form-group"></div>
+        // You should adjust this option if your form group consists of many fields which not all of them need to be validated
+        group: '.form-group',
 
         // Live validating option
         // Can be one of 3 values:
@@ -1681,24 +1817,23 @@
         // - submitted: The live validating is enabled after the form is submitted
         live: 'enabled',
 
-        // Map the field name with validator rules
-        fields: null,
+        // Default invalid message
+        message: 'This value is not valid',
 
-        // Use custom event name to avoid window.onerror being invoked by jQuery
-        // See https://github.com/nghuuphuoc/bootstrapvalidator/issues/630
-        events: {
-            formInit: 'init.form.bv',
-            formError: 'error.form.bv',
-            formSuccess: 'success.form.bv',
-            fieldAdded: 'added.field.bv',
-            fieldRemoved: 'removed.field.bv',
-            fieldInit: 'init.field.bv',
-            fieldError: 'error.field.bv',
-            fieldSuccess: 'success.field.bv',
-            fieldStatus: 'status.field.bv',
-            validatorError: 'error.validator.bv',
-            validatorSuccess: 'success.validator.bv'
-        }
+        // The submit buttons selector
+        // These buttons will be disabled to prevent the valid form from multiple submissions
+        submitButtons: '[type="submit"]',
+
+        // The field will not be live validated if its length is less than this number of characters
+        threshold: null,
+
+        // Whether to be verbose when validating a field or not.
+        // Possible values:
+        // - true:  when a field has multiple validators, all of them will be checked, and respectively - if errors occur in
+        //          multiple validators, all of them will be displayed to the user
+        // - false: when a field has multiple validators, validation for this field will be terminated upon the first encountered error.
+        //          Thus, only the very first error message related to this field will be displayed to the user
+        verbose: true
     };
 
     // Available validators
@@ -1940,22 +2075,60 @@
             if (value === '') {
                 return true;
             }
+
+			value = this._format(value);
             if (!$.isNumeric(value)) {
                 return false;
             }
 
-            var min = $.isNumeric(options.min) ? options.min : validator.getDynamicOption($field, options.min),
-                max = $.isNumeric(options.max) ? options.max : validator.getDynamicOption($field, options.max);
+            var min      = $.isNumeric(options.min) ? options.min : validator.getDynamicOption($field, options.min),
+                max      = $.isNumeric(options.max) ? options.max : validator.getDynamicOption($field, options.max),
+                minValue = this._format(min),
+                maxValue = this._format(max);
+
             value = parseFloat(value);
 			return (options.inclusive === true || options.inclusive === undefined)
                     ? {
-                        valid: value >= min && value <= max,
+                        valid: value >= minValue && value <= maxValue,
                         message: $.fn.bootstrapValidator.helpers.format(options.message || $.fn.bootstrapValidator.i18n.between['default'], [min, max])
                     }
                     : {
-                        valid: value > min  && value <  max,
+                        valid: value > minValue  && value <  maxValue,
                         message: $.fn.bootstrapValidator.helpers.format(options.message || $.fn.bootstrapValidator.i18n.between.notInclusive, [min, max])
                     };
+        },
+
+        _format: function(value) {
+            return (value + '').replace(',', '.');
+        }
+    };
+}(window.jQuery));
+;(function($) {
+    $.fn.bootstrapValidator.validators.blank = {
+        /**
+         * Placeholder validator that can be used to display a custom validation message
+         * returned from the server
+         * Example:
+         *
+         * (1) a "blank" validator is applied to an input field.
+         * (2) data is entered via the UI that is unable to be validated client-side.
+         * (3) server returns a 400 with JSON data that contains the field that failed
+         *     validation and an associated message.
+         * (4) ajax 400 call handler does the following:
+         *
+         *      bv.updateMessage(field, 'blank', errorMessage);
+         *      bv.updateStatus(field, 'INVALID');
+         *
+         * @see https://github.com/nghuuphuoc/bootstrapvalidator/issues/542
+         * @see https://github.com/nghuuphuoc/bootstrapvalidator/pull/666
+         * @param {BootstrapValidator} validator The validator plugin instance
+         * @param {jQuery} $field Field element
+         * @param {Object} options Can consist of the following keys:
+         * - message: The invalid message
+         * @returns {Boolean}
+         */
+        validate: function(validator, $field, options) {
+            return true;
         }
     };
 }(window.jQuery));
@@ -1983,19 +2156,20 @@
          *          // $field is the field element
          *      }
          * - message: The invalid message
-         * @returns {Boolean|Deferred}
+         * @returns {Deferred}
          */
         validate: function(validator, $field, options) {
-            var value = $field.val();
+            var value  = $field.val(),
+                dfd    = new $.Deferred(),
+                result = { valid: true };
 
             if (options.callback) {
-                var dfd      = new $.Deferred(),
-                    response = $.fn.bootstrapValidator.helpers.call(options.callback, [value, validator, $field]);
-                dfd.resolve($field, 'callback', 'boolean' === typeof response ? response : response.valid, 'object' === typeof response && response.message ? response.message : null);
-                return dfd;
+                var response = $.fn.bootstrapValidator.helpers.call(options.callback, [value, validator, $field]);
+                result = ('boolean' === typeof response) ? { valid: response } :  response;
             }
 
-            return true;
+            dfd.resolve($field, 'callback', result);
+            return dfd;
         }
     };
 }(window.jQuery));
@@ -2064,6 +2238,135 @@
             }
 
             return { valid: isValid, message: message };
+        }
+    };
+}(window.jQuery));
+;(function($) {
+    $.fn.bootstrapValidator.i18n.color = $.extend($.fn.bootstrapValidator.i18n.color || {}, {
+        'default': 'Please enter a valid color'
+    });
+
+    $.fn.bootstrapValidator.validators.color = {
+        SUPPORTED_TYPES: [
+            'hex', 'rgb', 'rgba', 'hsl', 'hsla', 'keyword'
+        ],
+
+        KEYWORD_COLORS: [
+            // Colors start with A
+            'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
+            // B
+            'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood',
+            // C
+            'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
+            // D
+            'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta',
+            'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue',
+            'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray',
+            'dimgrey', 'dodgerblue',
+            // F
+            'firebrick', 'floralwhite', 'forestgreen', 'fuchsia',
+            // G
+            'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey',
+            // H
+            'honeydew', 'hotpink',
+            // I
+            'indianred', 'indigo', 'ivory',
+            // K
+            'khaki',
+            // L
+            'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan',
+            'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen',
+            'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen',
+            'linen',
+            // M
+            'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen',
+            'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream',
+            'mistyrose', 'moccasin',
+            // N
+            'navajowhite', 'navy',
+            // O
+            'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid',
+            // P
+            'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink',
+            'plum', 'powderblue', 'purple',
+            // R
+            'red', 'rosybrown', 'royalblue',
+            // S
+            'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue',
+            'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue',
+            // T
+            'tan', 'teal', 'thistle', 'tomato', 'transparent', 'turquoise',
+            // V
+            'violet',
+            // W
+            'wheat', 'white', 'whitesmoke',
+            // Y
+            'yellow', 'yellowgreen'
+        ],
+
+        /**
+         * Return true if the input value is a valid color
+         *
+         * @param {BootstrapValidator} validator The validator plugin instance
+         * @param {jQuery} $field Field element
+         * @param {Object} options Can consist of the following keys:
+         * - message: The invalid message
+         * - type: The array of valid color types
+         * @returns {Boolean}
+         */
+        validate: function(validator, $field, options) {
+            var value = $field.val();
+            if (value === '') {
+                return true;
+            }
+
+            var types = options.type || this.SUPPORTED_TYPES;
+            if (!$.isArray(types)) {
+                types = types.replace(/s/g, '').split(',');
+            }
+
+            var method,
+                type,
+                isValid = false;
+
+            for (var i = 0; i < types.length; i++) {
+                type    = types[i];
+                method  = '_' + type.toLowerCase();
+                isValid = isValid || this[method](value);
+                if (isValid) {
+                    return true;
+                }
+            }
+
+            return false;
+        },
+
+        _hex: function(value) {
+            return /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(value);
+        },
+
+        _hsl: function(value) {
+            return /^hsl\((\s*(-?\d+)\s*,)(\s*(\b(0?\d{1,2}|100)\b%)\s*,)(\s*(\b(0?\d{1,2}|100)\b%)\s*)\)$/.test(value);
+        },
+
+        _hsla: function(value) {
+            return /^hsla\((\s*(-?\d+)\s*,)(\s*(\b(0?\d{1,2}|100)\b%)\s*,){2}(\s*(0?(\.\d+)?|1(\.0+)?)\s*)\)$/.test(value);
+        },
+
+        _keyword: function(value) {
+            return $.inArray(value, this.KEYWORD_COLORS) >= 0;
+        },
+
+        _rgb: function(value) {
+            var regexInteger = /^rgb\((\s*(\b([01]?\d{1,2}|2[0-4]\d|25[0-5])\b)\s*,){2}(\s*(\b([01]?\d{1,2}|2[0-4]\d|25[0-5])\b)\s*)\)$/,
+                regexPercent = /^rgb\((\s*(\b(0?\d{1,2}|100)\b%)\s*,){2}(\s*(\b(0?\d{1,2}|100)\b%)\s*)\)$/;
+            return regexInteger.test(value) || regexPercent.test(value);
+        },
+
+        _rgba: function(value) {
+            var regexInteger = /^rgba\((\s*(\b([01]?\d{1,2}|2[0-4]\d|25[0-5])\b)\s*,){3}(\s*(0?(\.\d+)?|1(\.0+)?)\s*)\)$/,
+                regexPercent = /^rgba\((\s*(\b(0?\d{1,2}|100)\b%)\s*,){3}(\s*(0?(\.\d+)?|1(\.0+)?)\s*)\)$/;
+            return regexInteger.test(value) || regexPercent.test(value);
         }
     };
 }(window.jQuery));
@@ -2343,13 +2646,18 @@
 }(window.jQuery));
 ;(function($) {
     $.fn.bootstrapValidator.i18n.date = $.extend($.fn.bootstrapValidator.i18n.date || {}, {
-        'default': 'Please enter a valid date'
+        'default': 'Please enter a valid date',
+        min: 'Please enter a date after %s',
+        max: 'Please enter a date before %s',
+        range: 'Please enter a date in the range %s - %s'
     });
 
     $.fn.bootstrapValidator.validators.date = {
         html5Attributes: {
             message: 'message',
             format: 'format',
+            min: 'min',
+            max: 'max',
             separator: 'separator'
         },
 
@@ -2360,6 +2668,8 @@
          * @param {jQuery} $field Field element
          * @param {Object} options Can consist of the following keys:
          * - message: The invalid message
+         * - min: the minimum date
+         * - max: the maximum date
          * - separator: Use to separate the date, month, and year.
          * By default, it is /
          * - format: The date format. Default is MM/DD/YYYY
@@ -2369,7 +2679,7 @@
          * ii) date and time:
          * The time can consist of h, m, s parts which are separated by :
          * ii) date, time and A (indicating AM or PM)
-         * @returns {Boolean}
+         * @returns {Boolean|Object}
          */
         validate: function(validator, $field, options) {
             var value = $field.val();
@@ -2393,7 +2703,10 @@
                 time       = (sections.length > 1) ? sections[1] : null;
 
             if (formats.length !== sections.length) {
-                return false;
+                return {
+                    valid: false,
+                    message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                };
             }
 
             // Determine the separator
@@ -2402,14 +2715,20 @@
                 separator = (date.indexOf('/') !== -1) ? '/' : ((date.indexOf('-') !== -1) ? '-' : null);
             }
             if (separator === null || date.indexOf(separator) === -1) {
-                return false;
+                return {
+                    valid: false,
+                    message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                };
             }
 
             // Determine the date
             date       = date.split(separator);
             dateFormat = dateFormat.split(separator);
             if (date.length !== dateFormat.length) {
-                return false;
+                return {
+                    valid: false,
+                    message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                };
             }
 
             var year  = date[$.inArray('YYYY', dateFormat)],
@@ -2417,7 +2736,10 @@
                 day   = date[$.inArray('DD', dateFormat)];
 
             if (!year || !month || !day || year.length !== 4) {
-                return false;
+                return {
+                    valid: false,
+                    message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                };
             }
 
             // Determine the time
@@ -2427,7 +2749,10 @@
                 time       = time.split(':');
 
                 if (timeFormat.length !== time.length) {
-                    return false;
+                    return {
+                        valid: false,
+                        message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                    };
                 }
 
                 hours   = time.length > 0 ? time[0] : null;
@@ -2437,39 +2762,137 @@
                 // Validate seconds
                 if (seconds) {
                     if (isNaN(seconds) || seconds.length > 2) {
-                        return false;
+                        return {
+                            valid: false,
+                            message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                        };
                     }
                     seconds = parseInt(seconds, 10);
                     if (seconds < 0 || seconds > 60) {
-                        return false;
+                        return {
+                            valid: false,
+                            message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                        };
                     }
                 }
 
                 // Validate hours
                 if (hours) {
                     if (isNaN(hours) || hours.length > 2) {
-                        return false;
+                        return {
+                            valid: false,
+                            message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                        };
                     }
                     hours = parseInt(hours, 10);
                     if (hours < 0 || hours >= 24 || (amOrPm && hours > 12)) {
-                        return false;
+                        return {
+                            valid: false,
+                            message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                        };
                     }
                 }
 
                 // Validate minutes
                 if (minutes) {
                     if (isNaN(minutes) || minutes.length > 2) {
-                        return false;
+                        return {
+                            valid: false,
+                            message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                        };
                     }
                     minutes = parseInt(minutes, 10);
                     if (minutes < 0 || minutes > 59) {
-                        return false;
+                        return {
+                            valid: false,
+                            message: options.message || $.fn.bootstrapValidator.i18n.date['default']
+                        };
                     }
                 }
             }
 
             // Validate day, month, and year
-            return $.fn.bootstrapValidator.helpers.date(year, month, day);
+            var valid   = $.fn.bootstrapValidator.helpers.date(year, month, day),
+                message = options.message || $.fn.bootstrapValidator.i18n.date['default'];
+
+            // declare the date, min and max objects
+            var min       = null,
+                max       = null,
+                minOption = options.min,
+                maxOption = options.max;
+
+            if (minOption) {
+                if (isNaN(Date.parse(minOption))) {
+                    minOption = validator.getDynamicOption($field, minOption);
+                }
+                min = this._parseDate(minOption, dateFormat, separator);
+            }
+
+            if (maxOption) {
+                if (isNaN(Date.parse(maxOption))) {
+                    maxOption = validator.getDynamicOption($field, maxOption);
+                }
+                max = this._parseDate(maxOption, dateFormat, separator);
+            }
+
+            date = new Date(year, month, day, hours, minutes, seconds);
+
+            switch (true) {
+                case (minOption && !maxOption && valid):
+                    valid   = date.getTime() >= min.getTime();
+                    message = options.message || $.fn.bootstrapValidator.helpers.format($.fn.bootstrapValidator.i18n.date.min, minOption);
+                    break;
+
+                case (maxOption && !minOption && valid):
+                    valid   = date.getTime() <= max.getTime();
+                    message = options.message || $.fn.bootstrapValidator.helpers.format($.fn.bootstrapValidator.i18n.date.max, maxOption);
+                    break;
+
+                case (maxOption && minOption && valid):
+                    valid   = date.getTime() <= max.getTime() && date.getTime() >= min.getTime();
+                    message = options.message || $.fn.bootstrapValidator.helpers.format($.fn.bootstrapValidator.i18n.date.range, [minOption, maxOption]);
+                    break;
+
+                default:
+                    break;
+            }
+
+            return {
+                valid: valid,
+                message: message
+            };
+        },
+
+        /**
+         * Return a date object after parsing the date string
+         *
+         * @param {String} date   The date string to parse
+         * @param {String} format The date format
+         * The format can be:
+         *   - date: Consist of DD, MM, YYYY parts which are separated by the separator option
+         *   - date and time:
+         *     The time can consist of h, m, s parts which are separated by :
+         * @param {String} separator The separator used to separate the date, month, and year
+         * @returns {Date}
+         */
+        _parseDate: function(date, format, separator) {
+            var minutes     = 0, hours = 0, seconds = 0,
+                sections    = date.split(' '),
+                dateSection = sections[0],
+                timeSection = (sections.length > 1) ? sections[1] : null;
+
+            dateSection = dateSection.split(separator);
+            var year  = dateSection[$.inArray('YYYY', format)],
+                month = dateSection[$.inArray('MM', format)],
+                day   = dateSection[$.inArray('DD', format)];
+            if (timeSection) {
+                timeSection = timeSection.split(':');
+                hours       = timeSection.length > 0 ? timeSection[0] : null;
+                minutes     = timeSection.length > 1 ? timeSection[1] : null;
+                seconds     = timeSection.length > 2 ? timeSection[2] : null;
+            }
+
+            return new Date(year, month, day, hours, minutes, seconds);
         }
     };
 }(window.jQuery));
@@ -2500,17 +2923,24 @@
                 return true;
             }
 
-            var compareWith = validator.getFieldElements(options.field);
-            if (compareWith === null || compareWith.length === 0) {
-                return true;
+            var fields  = options.field.split(','),
+                isValid = true;
+
+            for (var i = 0; i < fields.length; i++) {
+                var compareWith = validator.getFieldElements(fields[i]);
+                if (compareWith == null || compareWith.length === 0) {
+                    continue;
+                }
+
+                var compareValue = compareWith.val();
+                if (value === compareValue) {
+                    isValid = false;
+                } else if (compareValue !== '') {
+                    validator.updateStatus(compareWith, validator.STATUS_VALID, 'different');
+                }
             }
 
-            if (value !== compareWith.val()) {
-                validator.updateStatus(options.field, validator.STATUS_VALID, 'different');
-                return true;
-            } else {
-                return false;
-            }
+            return isValid;
         }
     };
 }(window.jQuery));
@@ -2584,6 +3014,12 @@
     });
 
     $.fn.bootstrapValidator.validators.emailAddress = {
+        html5Attributes: {
+            message: 'message',
+            multiple: 'multiple',
+            separator: 'separator'
+        },
+
         enableByHtml5: function($field) {
             return ('email' === $field.attr('type'));
         },
@@ -2594,6 +3030,8 @@
          * @param {BootstrapValidator} validator Validate plugin instance
          * @param {jQuery} $field Field element
          * @param {Object} [options]
+         * - multiple: Allow multiple email addresses, separated by a comma or semicolon; default is false.
+         * - separator: Regex for character or characters expected as separator between addresses; default is comma /[,;]/, i.e. comma or semicolon.
          * @returns {Boolean}
          */
         validate: function(validator, $field, options) {
@@ -2604,8 +3042,56 @@
 
             // Email address regular expression
             // http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
-            var emailRegExp = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-            return emailRegExp.test(value);
+            var emailRegExp   = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
+                allowMultiple = options.multiple === true || options.multiple === 'true';
+
+            if (allowMultiple) {
+                var separator = options.separator || /[,;]/,
+                    addresses = this._splitEmailAddresses(value, separator);
+
+                for (var i = 0; i < addresses.length; i++) {
+                    if (!emailRegExp.test(addresses[i])) {
+                        return false;
+                    }
+                }
+
+                return true;
+            } else {
+                return emailRegExp.test(value);
+            }
+        },
+
+        _splitEmailAddresses: function(emailAddresses, separator) {
+            var quotedFragments     = emailAddresses.split(/"/),
+                quotedFragmentCount = quotedFragments.length,
+                emailAddressArray   = [],
+                nextEmailAddress    = '';
+
+            for (var i = 0; i < quotedFragmentCount; i++) {
+                if (i % 2 === 0) {
+                    var splitEmailAddressFragments     = quotedFragments[i].split(separator),
+                        splitEmailAddressFragmentCount = splitEmailAddressFragments.length;
+
+                    if (splitEmailAddressFragmentCount === 1) {
+                        nextEmailAddress += splitEmailAddressFragments[0];
+                    } else {
+                        emailAddressArray.push(nextEmailAddress + splitEmailAddressFragments[0]);
+
+                        for (var j = 1; j < splitEmailAddressFragmentCount - 1; j++) {
+                            emailAddressArray.push(splitEmailAddressFragments[j]);
+                        }
+                        nextEmailAddress = splitEmailAddressFragments[splitEmailAddressFragmentCount - 1];
+                    }
+                } else {
+                    nextEmailAddress += '"' + quotedFragments[i];
+                    if (i < quotedFragmentCount - 1) {
+                        nextEmailAddress += '"';
+                    }
+                }
+            }
+
+            emailAddressArray.push(nextEmailAddress);
+            return emailAddressArray;
         }
     };
 }(window.jQuery));
@@ -2617,7 +3103,12 @@
     $.fn.bootstrapValidator.validators.file = {
         html5Attributes: {
             extension: 'extension',
+            maxfiles: 'maxFiles',
+            minfiles: 'minFiles',
             maxsize: 'maxSize',
+            minsize: 'minSize',
+            maxtotalsize: 'maxTotalSize',
+            mintotalsize: 'minTotalSize',
             message: 'message',
             type: 'type'
         },
@@ -2629,7 +3120,12 @@
          * @param {jQuery} $field Field element
          * @param {Object} options Can consist of the following keys:
          * - extension: The allowed extensions, separated by a comma
+         * - maxFiles: The maximum number of files
+         * - minFiles: The minimum number of files
          * - maxSize: The maximum size in bytes
+         * - minSize: The minimum size in bytes
+         * - maxTotalSize: The maximum size in bytes for all files
+         * - minTotalSize: The minimum size in bytes for all files
          * - message: The invalid message
          * - type: The allowed MIME type, separated by a comma
          * @returns {Boolean}
@@ -2647,24 +3143,33 @@
 
             if (html5) {
                 // Get FileList instance
-                var files = $field.get(0).files,
-                    total = files.length;
+                var files     = $field.get(0).files,
+                    total     = files.length,
+                    totalSize = 0;
+
+                if ((options.maxFiles && total > parseInt(options.maxFiles, 10))        // Check the maxFiles
+                    || (options.minFiles && total < parseInt(options.minFiles, 10)))    // Check the minFiles
+                {
+                    return false;
+                }
+
                 for (var i = 0; i < total; i++) {
-                    // Check file size
-                    if (options.maxSize && files[i].size > parseInt(options.maxSize, 10)) {
-                        return false;
-                    }
+                    totalSize += files[i].size;
+                    ext        = files[i].name.substr(files[i].name.lastIndexOf('.') + 1);
 
-                    // Check file extension
-                    ext = files[i].name.substr(files[i].name.lastIndexOf('.') + 1);
-                    if (extensions && $.inArray(ext.toLowerCase(), extensions) === -1) {
+                    if ((options.minSize && files[i].size < parseInt(options.minSize, 10))                      // Check the minSize
+                        || (options.maxSize && files[i].size > parseInt(options.maxSize, 10))                   // Check the maxSize
+                        || (extensions && $.inArray(ext.toLowerCase(), extensions) === -1)                      // Check file extension
+                        || (files[i].type && types && $.inArray(files[i].type.toLowerCase(), types) === -1))    // Check file type
+                    {
                         return false;
                     }
+                }
 
-                    // Check file type
-                    if (files[i].type && types && $.inArray(files[i].type.toLowerCase(), types) === -1) {
-                        return false;
-                    }
+                if ((options.maxTotalSize && totalSize > parseInt(options.maxTotalSize, 10))        // Check the maxTotalSize
+                    || (options.minTotalSize && totalSize < parseInt(options.minTotalSize, 10)))    // Check the minTotalSize
+                {
+                    return false;
                 }
             } else {
                 // Check file extension
@@ -2724,21 +3229,29 @@
             if (value === '') {
                 return true;
             }
+            
+            value = this._format(value);
             if (!$.isNumeric(value)) {
                 return false;
             }
 
-            var compareTo = $.isNumeric(options.value) ? options.value : validator.getDynamicOption($field, options.value);
+            var compareTo      = $.isNumeric(options.value) ? options.value : validator.getDynamicOption($field, options.value),
+                compareToValue = this._format(compareTo);
+
             value = parseFloat(value);
 			return (options.inclusive === true || options.inclusive === undefined)
                     ? {
-                        valid: value >= compareTo,
+                        valid: value >= compareToValue,
                         message: $.fn.bootstrapValidator.helpers.format(options.message || $.fn.bootstrapValidator.i18n.greaterThan['default'], compareTo)
                     }
                     : {
-                        valid: value > compareTo,
+                        valid: value > compareToValue,
                         message: $.fn.bootstrapValidator.helpers.format(options.message || $.fn.bootstrapValidator.i18n.greaterThan.notInclusive, compareTo)
                     };
+        },
+
+        _format: function(value) {
+            return (value + '').replace(',', '.');
         }
     };
 }(window.jQuery));
@@ -2828,7 +3341,12 @@
             if (value === '') {
                 return true;
             }
-            return /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(value);
+
+            return ('color' === $field.attr('type'))
+                        // Only accept 6 hex character values due to the HTML 5 spec
+                        // See http://www.w3.org/TR/html-markup/input.color.html#input.color.attrs.value
+                        ? /^#[0-9A-F]{6}$/i.test(value)
+                        : /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(value);
         }
     };
 }(window.jQuery));
@@ -2903,7 +3421,7 @@
             NO: 'Norway',
             PK: 'Pakistan',
             PL: 'Poland',
-            PS: 'Palestinian',
+            PS: 'Palestine',
             PT: 'Portugal',
             QA: 'Qatar',
             RO: 'Romania',
@@ -3082,33 +3600,35 @@
     $.fn.bootstrapValidator.i18n.id = $.extend($.fn.bootstrapValidator.i18n.id || {}, {
         'default': 'Please enter a valid identification number',
         countryNotSupported: 'The country code %s is not supported',
-        country: 'Please enter a valid %s identification number',
+        country: 'Please enter a valid identification number in %s',
         countries: {
             BA: 'Bosnia and Herzegovina',
-            BG: 'Bulgarian',
-            BR: 'Brazilian',
-            CH: 'Swiss',
-            CL: 'Chilean',
-            CZ: 'Czech',
-            DK: 'Danish',
-            EE: 'Estonian',
-            ES: 'Spanish',
-            FI: 'Finnish',
-            HR: 'Croatian',
-            IE: 'Irish',
+            BG: 'Bulgaria',
+            BR: 'Brazil',
+            CH: 'Switzerland',
+            CL: 'Chile',
+            CN: 'China',
+            CZ: 'Czech Republic',
+            DK: 'Denmark',
+            EE: 'Estonia',
+            ES: 'Spain',
+            FI: 'Finland',
+            HR: 'Croatia',
+            IE: 'Ireland',
             IS: 'Iceland',
-            LT: 'Lithuanian',
-            LV: 'Latvian',
+            LT: 'Lithuania',
+            LV: 'Latvia',
             ME: 'Montenegro',
-            MK: 'Macedonian',
-            NL: 'Dutch',
-            RO: 'Romanian',
-            RS: 'Serbian',
-            SE: 'Swedish',
-            SI: 'Slovenian',
-            SK: 'Slovak',
+            MK: 'Macedonia',
+            NL: 'Netherlands',
+            RO: 'Romania',
+            RS: 'Serbia',
+            SE: 'Sweden',
+            SI: 'Slovenia',
+            SK: 'Slovakia',
             SM: 'San Marino',
-            ZA: 'South African'
+            TH: 'Thailand',
+            ZA: 'South Africa'
         }
     });
 
@@ -3120,8 +3640,8 @@
 
         // Supported country codes
         COUNTRY_CODES: [
-            'BA', 'BG', 'BR', 'CH', 'CL', 'CZ', 'DK', 'EE', 'ES', 'FI', 'HR', 'IE', 'IS', 'LT', 'LV', 'ME', 'MK', 'NL',
-            'RO', 'RS', 'SE', 'SI', 'SK', 'SM', 'ZA'
+            'BA', 'BG', 'BR', 'CH', 'CL', 'CN', 'CZ', 'DK', 'EE', 'ES', 'FI', 'HR', 'IE', 'IS', 'LT', 'LV', 'ME', 'MK', 'NL',
+            'RO', 'RS', 'SE', 'SI', 'SK', 'SM', 'TH', 'ZA'
         ],
 
         /**
@@ -3394,6 +3914,542 @@
             return sum + '' === value.charAt(8).toUpperCase();
         },
 
+        /**
+         * Validate Chinese citizen identification number
+         *
+         * Rules:
+         * - For current 18-digit system (since 1st Oct 1999, defined by GB11643—1999 national standard):
+         *     - Digit 0-5: Must be a valid administrative division code of China PR.
+         *     - Digit 6-13: Must be a valid YYYYMMDD date of birth. A future date is tolerated.
+         *     - Digit 14-16: Order code, any integer.
+         *     - Digit 17: An ISO 7064:1983, MOD 11-2 checksum.
+         *       Both upper/lower case of X are tolerated.
+         * - For deprecated 15-digit system:
+         *     - Digit 0-5: Must be a valid administrative division code of China PR.
+         *     - Digit 6-11: Must be a valid YYMMDD date of birth, indicating the year of 19XX.
+         *     - Digit 12-14: Order code, any integer.
+         * Lists of valid administrative division codes of China PR can be seen here:
+         * <http://www.stats.gov.cn/tjsj/tjbz/xzqhdm/>
+         * Published and maintained by National Bureau of Statistics of China PR.
+         * NOTE: Current and deprecated codes MUST BOTH be considered valid.
+         * Many Chinese citizens born in once existed administrative divisions!
+         *
+         * @see http://en.wikipedia.org/wiki/Resident_Identity_Card#Identity_card_number
+         * @param {String} value The ID
+         * @returns {Boolean}
+         */
+        _cn: function(value) {
+            // Basic format check (18 or 15 digits, considering X in checksum)
+            value = value.trim();
+            if (!/^\d{15}$/.test(value) && !/^\d{17}[\dXx]{1}$/.test(value)) {
+                return false;
+            }
+            
+            // Check China PR Administrative division code
+            var adminDivisionCodes = {
+                11: {
+                    0: [0],
+                    1: [[0, 9], [11, 17]],
+                    2: [0, 28, 29]
+                },
+                12: {
+                    0: [0],
+                    1: [[0, 16]],
+                    2: [0, 21, 23, 25]
+                },
+                13: {
+                    0: [0],
+                    1: [[0, 5], 7, 8, 21, [23, 33], [81, 85]],
+                    2: [[0, 5], [7, 9], [23, 25], 27, 29, 30, 81, 83],
+                    3: [[0, 4], [21, 24]],
+                    4: [[0, 4], 6, 21, [23, 35], 81],
+                    5: [[0, 3], [21, 35], 81, 82],
+                    6: [[0, 4], [21, 38], [81, 84]],
+                    7: [[0, 3], 5, 6, [21, 33]],
+                    8: [[0, 4], [21, 28]],
+                    9: [[0, 3], [21, 30], [81, 84]],
+                    10: [[0, 3], [22, 26], 28, 81, 82],
+                    11: [[0, 2], [21, 28], 81, 82]
+                },
+                14: {
+                    0: [0],
+                    1: [0, 1, [5, 10], [21, 23], 81],
+                    2: [[0, 3], 11, 12, [21, 27]],
+                    3: [[0, 3], 11, 21, 22],
+                    4: [[0, 2], 11, 21, [23, 31], 81],
+                    5: [[0, 2], 21, 22, 24, 25, 81],
+                    6: [[0, 3], [21, 24]],
+                    7: [[0, 2], [21, 29], 81],
+                    8: [[0, 2], [21, 30], 81, 82],
+                    9: [[0, 2], [21, 32], 81],
+                    10: [[0, 2], [21, 34], 81, 82],
+                    11: [[0, 2], [21, 30], 81, 82],
+                    23: [[0, 3], 22, 23, [25, 30], 32, 33]
+                },
+                15: {
+                    0: [0],
+                    1: [[0, 5], [21, 25]],
+                    2: [[0, 7], [21, 23]],
+                    3: [[0, 4]],
+                    4: [[0, 4], [21, 26], [28, 30]],
+                    5: [[0, 2], [21, 26], 81],
+                    6: [[0, 2], [21, 27]],
+                    7: [[0, 3], [21, 27], [81, 85]],
+                    8: [[0, 2], [21, 26]],
+                    9: [[0, 2], [21, 29], 81],
+                    22: [[0, 2], [21, 24]],
+                    25: [[0, 2], [22, 31]],
+                    26: [[0, 2], [24, 27], [29, 32], 34],
+                    28: [0, 1, [22, 27]],
+                    29: [0, [21, 23]]
+                },
+                21: {
+                    0: [0],
+                    1: [[0, 6], [11, 14], [22, 24], 81],
+                    2: [[0, 4], [11, 13], 24, [81, 83]],
+                    3: [[0, 4], 11, 21, 23, 81],
+                    4: [[0, 4], 11, [21, 23]],
+                    5: [[0, 5], 21, 22],
+                    6: [[0, 4], 24, 81, 82],
+                    7: [[0, 3], 11, 26, 27, 81, 82],
+                    8: [[0, 4], 11, 81, 82],
+                    9: [[0, 5], 11, 21, 22],
+                    10: [[0, 5], 11, 21, 81],
+                    11: [[0, 3], 21, 22],
+                    12: [[0, 2], 4, 21, 23, 24, 81, 82],
+                    13: [[0, 3], 21, 22, 24, 81, 82],
+                    14: [[0, 4], 21, 22, 81]
+                },
+                22: {
+                    0: [0],
+                    1: [[0, 6], 12, 22, [81, 83]],
+                    2: [[0, 4], 11, 21, [81, 84]],
+                    3: [[0, 3], 22, 23, 81, 82],
+                    4: [[0, 3], 21, 22],
+                    5: [[0, 3], 21, 23, 24, 81, 82],
+                    6: [[0, 2], 4, 5, [21, 23], 25, 81],
+                    7: [[0, 2], [21, 24], 81],
+                    8: [[0, 2], 21, 22, 81, 82],
+                    24: [[0, 6], 24, 26]
+                },
+                23: {
+                    0: [0],
+                    1: [[0, 12], 21, [23, 29], [81, 84]],
+                    2: [[0, 8], 21, [23, 25], 27, [29, 31], 81],
+                    3: [[0, 7], 21, 81, 82],
+                    4: [[0, 7], 21, 22],
+                    5: [[0, 3], 5, 6, [21, 24]],
+                    6: [[0, 6], [21, 24]],
+                    7: [[0, 16], 22, 81],
+                    8: [[0, 5], 11, 22, 26, 28, 33, 81, 82],
+                    9: [[0, 4], 21],
+                    10: [[0, 5], 24, 25, 81, [83, 85]],
+                    11: [[0, 2], 21, 23, 24, 81, 82],
+                    12: [[0, 2], [21, 26], [81, 83]],
+                    27: [[0, 4], [21, 23]]
+                },
+                31: {
+                    0: [0],
+                    1: [0, 1, [3, 10], [12, 20]],
+                    2: [0, 30]
+                },
+                32: {
+                    0: [0],
+                    1: [[0, 7], 11, [13, 18], 24, 25],
+                    2: [[0, 6], 11, 81, 82],
+                    3: [[0, 5], 11, 12, [21, 24], 81, 82],
+                    4: [[0, 2], 4, 5, 11, 12, 81, 82],
+                    5: [[0, 9], [81, 85]],
+                    6: [[0, 2], 11, 12, 21, 23, [81, 84]],
+                    7: [0, 1, 3, 5, 6, [21, 24]],
+                    8: [[0, 4], 11, 26, [29, 31]],
+                    9: [[0, 3], [21, 25], 28, 81, 82],
+                    10: [[0, 3], 11, 12, 23, 81, 84, 88],
+                    11: [[0, 2], 11, 12, [81, 83]],
+                    12: [[0, 4], [81, 84]],
+                    13: [[0, 2], 11, [21, 24]]
+                },
+                33: {
+                    0: [0],
+                    1: [[0, 6], [8, 10], 22, 27, 82, 83, 85],
+                    2: [0, 1, [3, 6], 11, 12, 25, 26, [81, 83]],
+                    3: [[0, 4], 22, 24, [26, 29], 81, 82],
+                    4: [[0, 2], 11, 21, 24, [81, 83]],
+                    5: [[0, 3], [21, 23]],
+                    6: [[0, 2], 21, 24, [81, 83]],
+                    7: [[0, 3], 23, 26, 27, [81, 84]],
+                    8: [[0, 3], 22, 24, 25, 81],
+                    9: [[0, 3], 21, 22],
+                    10: [[0, 4], [21, 24], 81, 82],
+                    11: [[0, 2], [21, 27], 81]
+                },
+                34: {
+                    0: [0],
+                    1: [[0, 4], 11, [21, 24], 81],
+                    2: [[0, 4], 7, 8, [21, 23], 25],
+                    3: [[0, 4], 11, [21, 23]],
+                    4: [[0, 6], 21],
+                    5: [[0, 4], 6, [21, 23]],
+                    6: [[0, 4], 21],
+                    7: [[0, 3], 11, 21],
+                    8: [[0, 3], 11, [22, 28], 81],
+                    10: [[0, 4], [21, 24]],
+                    11: [[0, 3], 22, [24, 26], 81, 82],
+                    12: [[0, 4], 21, 22, 25, 26, 82],
+                    13: [[0, 2], [21, 24]],
+                    14: [[0, 2], [21, 24]],
+                    15: [[0, 3], [21, 25]],
+                    16: [[0, 2], [21, 23]],
+                    17: [[0, 2], [21, 23]],
+                    18: [[0, 2], [21, 25], 81]
+                },
+                35: {
+                    0: [0],
+                    1: [[0, 5], 11, [21, 25], 28, 81, 82],
+                    2: [[0, 6], [11, 13]],
+                    3: [[0, 5], 22],
+                    4: [[0, 3], 21, [23, 30], 81],
+                    5: [[0, 5], 21, [24, 27], [81, 83]],
+                    6: [[0, 3], [22, 29], 81],
+                    7: [[0, 2], [21, 25], [81, 84]],
+                    8: [[0, 2], [21, 25], 81],
+                    9: [[0, 2], [21, 26], 81, 82]
+                },
+                36: {
+                    0: [0],
+                    1: [[0, 5], 11, [21, 24]],
+                    2: [[0, 3], 22, 81],
+                    3: [[0, 2], 13, [21, 23]],
+                    4: [[0, 3], 21, [23, 30], 81, 82],
+                    5: [[0, 2], 21],
+                    6: [[0, 2], 22, 81],
+                    7: [[0, 2], [21, 35], 81, 82],
+                    8: [[0, 3], [21, 30], 81],
+                    9: [[0, 2], [21, 26], [81, 83]],
+                    10: [[0, 2], [21, 30]],
+                    11: [[0, 2], [21, 30], 81]
+                },
+                37: {
+                    0: [0],
+                    1: [[0, 5], 12, 13, [24, 26], 81],
+                    2: [[0, 3], 5, [11, 14], [81, 85]],
+                    3: [[0, 6], [21, 23]],
+                    4: [[0, 6], 81],
+                    5: [[0, 3], [21, 23]],
+                    6: [[0, 2], [11, 13], 34, [81, 87]],
+                    7: [[0, 5], 24, 25, [81, 86]],
+                    8: [[0, 2], 11, [26, 32], [81, 83]],
+                    9: [[0, 3], 11, 21, 23, 82, 83],
+                    10: [[0, 2], [81, 83]],
+                    11: [[0, 3], 21, 22],
+                    12: [[0, 3]],
+                    13: [[0, 2], 11, 12, [21, 29]],
+                    14: [[0, 2], [21, 28], 81, 82],
+                    15: [[0, 2], [21, 26], 81],
+                    16: [[0, 2], [21, 26]],
+                    17: [[0, 2], [21, 28]]
+                },
+                41: {
+                    0: [0],
+                    1: [[0, 6], 8, 22, [81, 85]],
+                    2: [[0, 5], 11, [21, 25]],
+                    3: [[0, 7], 11, [22, 29], 81],
+                    4: [[0, 4], 11, [21, 23], 25, 81, 82],
+                    5: [[0, 3], 5, 6, 22, 23, 26, 27, 81],
+                    6: [[0, 3], 11, 21, 22],
+                    7: [[0, 4], 11, 21, [24, 28], 81, 82],
+                    8: [[0, 4], 11, [21, 23], 25, [81, 83]],
+                    9: [[0, 2], 22, 23, [26, 28]],
+                    10: [[0, 2], [23, 25], 81, 82],
+                    11: [[0, 4], [21, 23]],
+                    12: [[0, 2], 21, 22, 24, 81, 82],
+                    13: [[0, 3], [21, 30], 81],
+                    14: [[0, 3], [21, 26], 81],
+                    15: [[0, 3], [21, 28]],
+                    16: [[0, 2], [21, 28], 81],
+                    17: [[0, 2], [21, 29]],
+                    90: [0, 1]
+                },
+                42: {
+                    0: [0],
+                    1: [[0, 7], [11, 17]],
+                    2: [[0, 5], 22, 81],
+                    3: [[0, 3], [21, 25], 81],
+                    5: [[0, 6], [25, 29], [81, 83]],
+                    6: [[0, 2], 6, 7, [24, 26], [82, 84]],
+                    7: [[0, 4]],
+                    8: [[0, 2], 4, 21, 22, 81],
+                    9: [[0, 2], [21, 23], 81, 82, 84],
+                    10: [[0, 3], [22, 24], 81, 83, 87],
+                    11: [[0, 2], [21, 27], 81, 82],
+                    12: [[0, 2], [21, 24], 81],
+                    13: [[0, 3], 21, 81],
+                    28: [[0, 2], 22, 23, [25, 28]],
+                    90: [0, [4, 6], 21]
+                },
+                43: {
+                    0: [0],
+                    1: [[0, 5], 11, 12, 21, 22, 24, 81],
+                    2: [[0, 4], 11, 21, [23, 25], 81],
+                    3: [[0, 2], 4, 21, 81, 82],
+                    4: [0, 1, [5, 8], 12, [21, 24], 26, 81, 82],
+                    5: [[0, 3], 11, [21, 25], [27, 29], 81],
+                    6: [[0, 3], 11, 21, 23, 24, 26, 81, 82],
+                    7: [[0, 3], [21, 26], 81],
+                    8: [[0, 2], 11, 21, 22],
+                    9: [[0, 3], [21, 23], 81],
+                    10: [[0, 3], [21, 28], 81],
+                    11: [[0, 3], [21, 29]],
+                    12: [[0, 2], [21, 30], 81],
+                    13: [[0, 2], 21, 22, 81, 82],
+                    31: [0, 1, [22, 27], 30]
+                },
+                44: {
+                    0: [0],
+                    1: [[0, 7], [11, 16], 83, 84],
+                    2: [[0, 5], 21, 22, 24, 29, 32, 33, 81, 82],
+                    3: [0, 1, [3, 8]],
+                    4: [[0, 4]],
+                    5: [0, 1, [6, 15], 23, 82, 83],
+                    6: [0, 1, [4, 8]],
+                    7: [0, 1, [3, 5], 81, [83, 85]],
+                    8: [[0, 4], 11, 23, 25, [81, 83]],
+                    9: [[0, 3], 23, [81, 83]],
+                    12: [[0, 3], [23, 26], 83, 84],
+                    13: [[0, 3], [22, 24], 81],
+                    14: [[0, 2], [21, 24], 26, 27, 81],
+                    15: [[0, 2], 21, 23, 81],
+                    16: [[0, 2], [21, 25]],
+                    17: [[0, 2], 21, 23, 81],
+                    18: [[0, 3], 21, 23, [25, 27], 81, 82],
+                    19: [0],
+                    20: [0],
+                    51: [[0, 3], 21, 22],
+                    52: [[0, 3], 21, 22, 24, 81],
+                    53: [[0, 2], [21, 23], 81]
+                },
+                45: {
+                    0: [0],
+                    1: [[0, 9], [21, 27]],
+                    2: [[0, 5], [21, 26]],
+                    3: [[0, 5], 11, 12, [21, 32]],
+                    4: [0, 1, [3, 6], 11, [21, 23], 81],
+                    5: [[0, 3], 12, 21],
+                    6: [[0, 3], 21, 81],
+                    7: [[0, 3], 21, 22],
+                    8: [[0, 4], 21, 81],
+                    9: [[0, 3], [21, 24], 81],
+                    10: [[0, 2], [21, 31]],
+                    11: [[0, 2], [21, 23]],
+                    12: [[0, 2], [21, 29], 81],
+                    13: [[0, 2], [21, 24], 81],
+                    14: [[0, 2], [21, 25], 81]
+                },
+                46: {
+                    0: [0],
+                    1: [0, 1, [5, 8]],
+                    2: [0, 1],
+                    3: [0, [21, 23]],
+                    90: [[0, 3], [5, 7], [21, 39]]
+                },
+                50: {
+                    0: [0],
+                    1: [[0, 19]],
+                    2: [0, [22, 38], [40, 43]],
+                    3: [0, [81, 84]]
+                },
+                51: {
+                    0: [0],
+                    1: [0, 1, [4, 8], [12, 15], [21, 24], 29, 31, 32, [81, 84]],
+                    3: [[0, 4], 11, 21, 22],
+                    4: [[0, 3], 11, 21, 22],
+                    5: [[0, 4], 21, 22, 24, 25],
+                    6: [0, 1, 3, 23, 26, [81, 83]],
+                    7: [0, 1, 3, 4, [22, 27], 81],
+                    8: [[0, 2], 11, 12, [21, 24]],
+                    9: [[0, 4], [21, 23]],
+                    10: [[0, 2], 11, 24, 25, 28],
+                    11: [[0, 2], [11, 13], 23, 24, 26, 29, 32, 33, 81],
+                    13: [[0, 4], [21, 25], 81],
+                    14: [[0, 2], [21, 25]],
+                    15: [[0, 3], [21, 29]],
+                    16: [[0, 3], [21, 23], 81],
+                    17: [[0, 3], [21, 25], 81],
+                    18: [[0, 3], [21, 27]],
+                    19: [[0, 3], [21, 23]],
+                    20: [[0, 2], 21, 22, 81],
+                    32: [0, [21, 33]],
+                    33: [0, [21, 38]],
+                    34: [0, 1, [22, 37]]
+                },
+                52: {
+                    0: [0],
+                    1: [[0, 3], [11, 15], [21, 23], 81],
+                    2: [0, 1, 3, 21, 22],
+                    3: [[0, 3], [21, 30], 81, 82],
+                    4: [[0, 2], [21, 25]],
+                    5: [[0, 2], [21, 27]],
+                    6: [[0, 3], [21, 28]],
+                    22: [0, 1, [22, 30]],
+                    23: [0, 1, [22, 28]],
+                    24: [0, 1, [22, 28]],
+                    26: [0, 1, [22, 36]],
+                    27: [[0, 2], 22, 23, [25, 32]]
+                },
+                53: {
+                    0: [0],
+                    1: [[0, 3], [11, 14], 21, 22, [24, 29], 81],
+                    3: [[0, 2], [21, 26], 28, 81],
+                    4: [[0, 2], [21, 28]],
+                    5: [[0, 2], [21, 24]],
+                    6: [[0, 2], [21, 30]],
+                    7: [[0, 2], [21, 24]],
+                    8: [[0, 2], [21, 29]],
+                    9: [[0, 2], [21, 27]],
+                    23: [0, 1, [22, 29], 31],
+                    25: [[0, 4], [22, 32]],
+                    26: [0, 1, [21, 28]],
+                    27: [0, 1, [22, 30]], 28: [0, 1, 22, 23],
+                    29: [0, 1, [22, 32]],
+                    31: [0, 2, 3, [22, 24]],
+                    34: [0, [21, 23]],
+                    33: [0, 21, [23, 25]],
+                    35: [0, [21, 28]]
+                },
+                54: {
+                    0: [0],
+                    1: [[0, 2], [21, 27]],
+                    21: [0, [21, 29], 32, 33],
+                    22: [0, [21, 29], [31, 33]],
+                    23: [0, 1, [22, 38]],
+                    24: [0, [21, 31]],
+                    25: [0, [21, 27]],
+                    26: [0, [21, 27]]
+                },
+                61: {
+                    0: [0],
+                    1: [[0, 4], [11, 16], 22, [24, 26]],
+                    2: [[0, 4], 22],
+                    3: [[0, 4], [21, 24], [26, 31]],
+                    4: [[0, 4], [22, 31], 81],
+                    5: [[0, 2], [21, 28], 81, 82],
+                    6: [[0, 2], [21, 32]],
+                    7: [[0, 2], [21, 30]],
+                    8: [[0, 2], [21, 31]],
+                    9: [[0, 2], [21, 29]],
+                    10: [[0, 2], [21, 26]]
+                },
+                62: {
+                    0: [0],
+                    1: [[0, 5], 11, [21, 23]],
+                    2: [0, 1],
+                    3: [[0, 2], 21],
+                    4: [[0, 3], [21, 23]],
+                    5: [[0, 3], [21, 25]],
+                    6: [[0, 2], [21, 23]],
+                    7: [[0, 2], [21, 25]],
+                    8: [[0, 2], [21, 26]],
+                    9: [[0, 2], [21, 24], 81, 82],
+                    10: [[0, 2], [21, 27]],
+                    11: [[0, 2], [21, 26]],
+                    12: [[0, 2], [21, 28]],
+                    24: [0, 21, [24, 29]],
+                    26: [0, 21, [23, 30]],
+                    29: [0, 1, [21, 27]],
+                    30: [0, 1, [21, 27]]
+                },
+                63: {
+                    0: [0],
+                    1: [[0, 5], [21, 23]],
+                    2: [0, 2, [21, 25]],
+                    21: [0, [21, 23], [26, 28]],
+                    22: [0, [21, 24]],
+                    23: [0, [21, 24]],
+                    25: [0, [21, 25]],
+                    26: [0, [21, 26]],
+                    27: [0, 1, [21, 26]],
+                    28: [[0, 2], [21, 23]]
+                },
+                64: {
+                    0: [0],
+                    1: [0, 1, [4, 6], 21, 22, 81],
+                    2: [[0, 3], 5, [21, 23]],
+                    3: [[0, 3], [21, 24], 81],
+                    4: [[0, 2], [21, 25]],
+                    5: [[0, 2], 21, 22]
+                },
+                65: {
+                    0: [0],
+                    1: [[0, 9], 21],
+                    2: [[0, 5]],
+                    21: [0, 1, 22, 23],
+                    22: [0, 1, 22, 23],
+                    23: [[0, 3], [23, 25], 27, 28],
+                    28: [0, 1, [22, 29]],
+                    29: [0, 1, [22, 29]],
+                    30: [0, 1, [22, 24]], 31: [0, 1, [21, 31]],
+                    32: [0, 1, [21, 27]],
+                    40: [0, 2, 3, [21, 28]],
+                    42: [[0, 2], 21, [23, 26]],
+                    43: [0, 1, [21, 26]],
+                    90: [[0, 4]], 27: [[0, 2], 22, 23]
+                },
+                71: { 0: [0] },
+                81: { 0: [0] },
+                82: { 0: [0] }
+            };
+            
+            var provincial  = parseInt(value.substr(0, 2), 10),
+                prefectural = parseInt(value.substr(2, 2), 10),
+                county      = parseInt(value.substr(4, 2), 10);
+            
+            if (!adminDivisionCodes[provincial] || !adminDivisionCodes[provincial][prefectural]) {
+                return false;
+            }
+            var inRange  = false,
+                rangeDef = adminDivisionCodes[provincial][prefectural];
+            for (var i = 0; i < rangeDef.length; i++) {
+                if (($.isArray(rangeDef[i]) && rangeDef[i][0] <= county && county <= rangeDef[i][1])
+                    || (!$.isArray(rangeDef[i]) && county === rangeDef[i]))
+                {
+                    inRange = true;
+                    break;
+                }
+            }
+
+            if (!inRange) {
+                return false;
+            }
+            
+            // Check date of birth
+            var dob;
+            if (value.length === 18) {
+                dob = value.substr(6, 8);
+            } else /* length == 15 */ { 
+                dob = '19' + value.substr(6, 6);
+            }
+            var year  = parseInt(dob.substr(0, 4), 10),
+                month = parseInt(dob.substr(4, 2), 10),
+                day   = parseInt(dob.substr(6, 2), 10);
+            if (!$.fn.bootstrapValidator.helpers.date(year, month, day)) {
+                return false;
+            }
+            
+            // Check checksum (18-digit system only)
+            if (value.length === 18) {
+                var sum    = 0,
+                    weight = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+                for (i = 0; i < 17; i++) {
+                    sum += parseInt(value.charAt(i), 10) * weight[i];
+                }
+                sum = (12 - (sum % 11)) % 11;
+                var checksum = (value.charAt(17).toUpperCase() !== 'X') ? parseInt(value.charAt(17), 10) : 10;
+                return checksum === sum;
+            }
+            
+            return true;
+        },
+        
         /**
          * Validate Czech national identification number (RC)
          * Examples:
@@ -3865,6 +4921,29 @@
         },
 
         /**
+         * Validate Thailand citizen number
+         * Examples:
+         * - Valid: 7145620509547, 3688699975685, 2368719339716
+         * - Invalid: 1100800092310
+         *
+         * @see http://en.wikipedia.org/wiki/National_identification_number#Thailand
+         * @param {String} value The ID
+         * @returns {Boolean}
+         */
+        _th: function(value) {
+            if (value.length !== 13) {
+                return false;
+            }
+
+            var sum = 0;
+            for (var i = 0; i < 12; i++) {
+                sum += parseInt(value.charAt(i), 10) * (13 - i);
+            }
+
+            return (11 - sum % 11) % 10 === parseInt(value.charAt(12), 10);
+        },
+
+        /**
          * Validate South African ID
          * Example:
          * - Valid: 8001015009087
@@ -4105,7 +5184,7 @@
                 case (options.ipv4 && options.ipv6):
                 /* falls through */
                 default:
-                    valid   = ipv4Regex.test(value) && ipv6Regex.test(value);
+                    valid   = ipv4Regex.test(value) || ipv6Regex.test(value);
                     message = options.message || $.fn.bootstrapValidator.i18n.ip['default'];
                     break;
             }
@@ -4412,21 +5491,29 @@
             if (value === '') {
                 return true;
             }
+            
+			value = this._format(value);
             if (!$.isNumeric(value)) {
                 return false;
             }
 
-            var compareTo = $.isNumeric(options.value) ? options.value : validator.getDynamicOption($field, options.value);
+            var compareTo      = $.isNumeric(options.value) ? options.value : validator.getDynamicOption($field, options.value),
+                compareToValue = this._format(compareTo);
+
             value = parseFloat(value);
             return (options.inclusive === true || options.inclusive === undefined)
                     ? {
-                        valid: value <= compareTo,
+                        valid: value <= compareToValue,
                         message: $.fn.bootstrapValidator.helpers.format(options.message || $.fn.bootstrapValidator.i18n.lessThan['default'], compareTo)
                     }
                     : {
-                        valid: value < compareTo,
+                        valid: value < compareToValue,
                         message: $.fn.bootstrapValidator.helpers.format(options.message || $.fn.bootstrapValidator.i18n.lessThan.notInclusive, compareTo)
                     };
+        },
+
+        _format: function(value) {
+            return (value + '').replace(',', '.');
         }
     };
 }(window.jQuery));
@@ -4566,6 +5653,10 @@
                             .length > 0;
             }
 
+            if ('number' === type && $field.get(0).validity && $field.get(0).validity.badInput === true) {
+                return true;
+            }
+
             return $.trim($field.val()) !== '';
         }
     };
@@ -4620,12 +5711,21 @@
         country: 'Please enter a valid phone number in %s',
         countries: {
             BR: 'Brazil',
+            CN: 'China',
+            CZ: 'Czech Republic',
+            DE: 'Germany',
+            DK: 'Denmark',
             ES: 'Spain',
             FR: 'France',
             GB: 'United Kingdom',
             MA: 'Morocco',
             PK: 'Pakistan',
-            US: 'USA'
+            RO: 'Romania',
+            RU: 'Russia',
+            SK: 'Slovakia',
+            TH: 'Thailand',
+            US: 'USA',
+            VE: 'Venezuela'
         }
     });
 
@@ -4636,7 +5736,7 @@
         },
 
         // The supported countries
-        COUNTRY_CODES: ['BR', 'ES', 'FR', 'GB', 'MA', 'PK', 'US'],
+        COUNTRY_CODES: ['BR', 'CN', 'CZ', 'DE', 'DK', 'ES', 'FR', 'GB', 'MA', 'PK', 'RO', 'RU', 'SK', 'TH', 'US', 'VE'],
 
         /**
          * Return true if the input value contains a valid phone number for the country
@@ -4681,6 +5781,32 @@
                     isValid = (/^(([\d]{4}[-.\s]{1}[\d]{2,3}[-.\s]{1}[\d]{2}[-.\s]{1}[\d]{2})|([\d]{4}[-.\s]{1}[\d]{3}[-.\s]{1}[\d]{4})|((\(?\+?[0-9]{2}\)?\s?)?(\(?\d{2}\)?\s?)?\d{4,5}[-.\s]?\d{4}))$/).test(value);
                     break;
 
+                case 'CN':
+                    // http://regexr.com/39dq4
+                    value   = $.trim(value);
+                    isValid = (/^((00|\+)?(86(?:-| )))?((\d{11})|(\d{3}[- ]{1}\d{4}[- ]{1}\d{4})|((\d{2,4}[- ]){1}(\d{7,8}|(\d{3,4}[- ]{1}\d{4}))([- ]{1}\d{1,4})?))$/).test(value);
+                    break;
+
+                case 'CZ':
+                    // Test: http://regexr.com/39hhl
+                    isValid = /^(((00)([- ]?)|\+)(420)([- ]?))?((\d{3})([- ]?)){2}(\d{3})$/.test(value);
+                    break;
+
+                case 'DE':
+                    // Test: http://regexr.com/39pkg
+                    value   = $.trim(value);
+                    isValid = (/^(((((((00|\+)49[ \-/]?)|0)[1-9][0-9]{1,4})[ \-/]?)|((((00|\+)49\()|\(0)[1-9][0-9]{1,4}\)[ \-/]?))[0-9]{1,7}([ \-/]?[0-9]{1,5})?)$/).test(value);
+                    break;
+
+                case 'DK':
+                    // Mathing DK phone numbers with country code in 1 of 3 formats and an
+                    // 8 digit phone number not starting with a 0 or 1. Can have 1 space
+                    // between each character except inside the country code.
+                    // Test: http://regex101.com/r/sS8fO4/1
+                    value   = $.trim(value);
+                    isValid = (/^(\+45|0045|\(45\))?\s?[2-9](\s?\d){7}$/).test(value);
+                    break;
+
                 case 'ES':
                     // http://regex101.com/r/rB9mA9/1
                     value   = $.trim(value);
@@ -4706,13 +5832,40 @@
                     value   = $.trim(value);
                     isValid = (/^(?:(?:(?:\+|00)212[\s]?(?:[\s]?\(0\)[\s]?)?)|0){1}(?:5[\s.-]?[2-3]|6[\s.-]?[13-9]){1}[0-9]{1}(?:[\s.-]?\d{2}){3}$/).test(value);
                     break;
-                
+
                 case 'PK':
                     // http://regex101.com/r/yH8aV9/2
                     value   = $.trim(value);
                     isValid = (/^0?3[0-9]{2}[0-9]{7}$/).test(value);
                     break;
-                
+
+        		case 'RO':
+        		    // All mobile network and land line
+                    // http://regexr.com/39fv1
+        		    isValid = (/^(\+4|)?(07[0-8]{1}[0-9]{1}|02[0-9]{2}|03[0-9]{2}){1}?(\s|\.|\-)?([0-9]{3}(\s|\.|\-|)){2}$/g).test(value);
+        		    break;
+
+                case 'RU':
+                    // http://regex101.com/r/gW7yT5/5
+                    isValid = (/^((8|\+7|007)[\-\.\/ ]?)?([\(\/\.]?\d{3}[\)\/\.]?[\-\.\/ ]?)?[\d\-\.\/ ]{7,10}$/g).test(value);
+                    break;
+
+                case 'SK':
+                    // Test: http://regexr.com/39hhl
+                    isValid = /^(((00)([- ]?)|\+)(420)([- ]?))?((\d{3})([- ]?)){2}(\d{3})$/.test(value);
+                    break;
+
+                case 'TH':
+        		    // http://regex101.com/r/vM5mZ4/2
+        		    isValid = (/^0\(?([6|8-9]{2})*-([0-9]{3})*-([0-9]{4})$/).test(value);
+        		    break;
+
+                case 'VE':
+                    // http://regex101.com/r/eM2yY0/6
+                    value   = $.trim(value);
+                    isValid = (/^0(?:2(?:12|4[0-9]|5[1-9]|6[0-9]|7[0-8]|8[1-35-8]|9[1-5]|3[45789])|4(?:1[246]|2[46]))\d{7}$/).test(value);
+                    break;
+
                 case 'US':
                 /* falls through */
                 default:
@@ -4784,7 +5937,19 @@
             message: 'message',
             name: 'name',
             type: 'type',
-            url: 'url'
+            url: 'url',
+            data: 'data',
+            delay: 'delay'
+        },
+
+        /**
+         * Destroy the timer when destroying the bootstrapValidator (using validator.destroy() method)
+         */
+        destroy: function(validator, $field, options) {
+            if ($field.data('bv.remote.timer')) {
+                clearTimeout($field.data('bv.remote.timer'));
+                $field.removeData('bv.remote.timer');
+            }
         },
 
         /**
@@ -4799,26 +5964,34 @@
          *  {
          *      <fieldName>: <fieldValue>
          *  }
+         * - delay
          * - name {String} [optional]: Override the field name for the request.
          * - message: The invalid message
          * - headers: Additional headers
-         * @returns {Boolean|Deferred}
+         * @returns {Deferred}
          */
         validate: function(validator, $field, options) {
-            var value = $field.val();
+            var value = $field.val(),
+                dfd   = new $.Deferred();
             if (value === '') {
-                return true;
+                dfd.resolve($field, 'remote', { valid: true });
+                return dfd;
             }
 
             var name    = $field.attr('data-bv-field'),
                 data    = options.data || {},
                 url     = options.url,
-                type    = options.type || 'POST',
+                type    = options.type || 'GET',
                 headers = options.headers || {};
 
             // Support dynamic data
             if ('function' === typeof data) {
                 data = data.call(this, validator);
+            }
+
+            // Parse string data from HTML5 attribute
+            if ('string' === typeof data) {
+                data = JSON.parse(data);
             }
 
             // Support dynamic url
@@ -4827,24 +6000,38 @@
             }
 
             data[options.name || name] = value;
+            function runCallback() {
+                var xhr = $.ajax({
+                    type: type,
+                    headers: headers,
+                    url: url,
+                    dataType: 'json',
+                    data: data
+                });
+                xhr.then(function(response) {
+                    response.valid = response.valid === true || response.valid === 'true';
+                    dfd.resolve($field, 'remote', response);
+                });
 
-            var dfd = new $.Deferred();
-            var xhr = $.ajax({
-                type: type,
-                headers: headers,
-                url: url,
-                dataType: 'json',
-                data: data
-            });
-            xhr.then(function(response) {
-                dfd.resolve($field, 'remote', response.valid === true || response.valid === 'true', response.message ? response.message : null);
-            });
+                dfd.fail(function() {
+                    xhr.abort();
+                });
 
-            dfd.fail(function() {
-                xhr.abort();
-            });
+                return dfd;
+            }
+            
+            if (options.delay) {
+                // Since the form might have multiple fields with the same name
+                // I have to attach the timer to the field element
+                if ($field.data('bv.remote.timer')) {
+                    clearTimeout($field.data('bv.remote.timer'));
+                }
 
-            return dfd;
+                $field.data('bv.remote.timer', setTimeout(runCallback, options.delay));
+                return dfd;
+            } else {
+                return runCallback();
+            }
         }
     };
 }(window.jQuery));
@@ -5104,18 +6291,23 @@
         html5Attributes: {
             message: 'message',
             min: 'min',
-            max: 'max'
+            max: 'max',
+            trim: 'trim',
+            utf8bytes: 'utf8Bytes'
         },
 
         enableByHtml5: function($field) {
-            var maxLength = $field.attr('maxlength');
+            var options   = {},
+                maxLength = $field.attr('maxlength'),
+                minLength = $field.attr('minlength');
             if (maxLength) {
-                return {
-                    max: parseInt(maxLength, 10)
-                };
+                options.max = parseInt(maxLength, 10);
+            }
+            if (minLength) {
+                options.min = parseInt(minLength, 10);
             }
 
-            return false;
+            return $.isEmptyObject(options) ? false : options;
         },
 
         /**
@@ -5134,19 +6326,41 @@
          *      - A callback function that returns the number
          *
          * - message: The invalid message
+         * - trim: Indicate the length will be calculated after trimming the value or not. It is false, by default
+         * - utf8bytes: Evaluate string length in UTF-8 bytes, default to false
          * @returns {Object}
          */
         validate: function(validator, $field, options) {
             var value = $field.val();
+            if (options.trim === true || options.trim === 'true') {
+                value = $.trim(value);
+            }
+
             if (value === '') {
                 return true;
             }
 
-            var min     = $.isNumeric(options.min) ? options.min : validator.getDynamicOption($field, options.min),
-                max     = $.isNumeric(options.max) ? options.max : validator.getDynamicOption($field, options.max),
-                length  = value.length,
-                isValid = true,
-                message = options.message || $.fn.bootstrapValidator.i18n.stringLength['default'];
+            var min        = $.isNumeric(options.min) ? options.min : validator.getDynamicOption($field, options.min),
+                max        = $.isNumeric(options.max) ? options.max : validator.getDynamicOption($field, options.max),
+                // Credit to http://stackoverflow.com/a/23329386 (@lovasoa) for UTF-8 byte length code
+                utf8Length = function(str) {
+                                 var s = str.length;
+                                 for (var i = str.length - 1; i >= 0; i--) {
+                                     var code = str.charCodeAt(i);
+                                     if (code > 0x7f && code <= 0x7ff) {
+                                         s++;
+                                     } else if (code > 0x7ff && code <= 0xffff) {
+                                         s += 2;
+                                     }
+                                     if (code >= 0xDC00 && code <= 0xDFFF) {
+                                         i--;
+                                     }
+                                 }
+                                 return s;
+                             },
+                length     = options.utf8Bytes ? utf8Length(value) : value.length,
+                isValid    = true,
+                message    = options.message || $.fn.bootstrapValidator.i18n.stringLength['default'];
 
             if ((min && length < parseInt(min, 10)) || (max && length > parseInt(max, 10))) {
                 isValid = false;
@@ -5181,7 +6395,8 @@
     $.fn.bootstrapValidator.validators.uri = {
         html5Attributes: {
             message: 'message',
-            allowlocal: 'allowLocal'
+            allowlocal: 'allowLocal',
+            protocol: 'protocol'
         },
 
         enableByHtml5: function($field) {
@@ -5196,6 +6411,7 @@
          * @param {Object} options
          * - message: The error message
          * - allowLocal: Allow the private and local network IP. Default to false
+         * - protocol: The protocols, separated by a comma. Default to "http, https, ftp"
          * @returns {Boolean}
          */
         validate: function(validator, $field, options) {
@@ -5233,11 +6449,14 @@
             // - Added exclusion of private, reserved and/or local networks ranges
             //   unless `allowLocal` is true
             //
+            // - Added possibility of choosing a custom protocol
+            //
             var allowLocal = options.allowLocal === true || options.allowLocal === 'true',
+                protocol   = (options.protocol || 'http, https, ftp').split(',').join('|').replace(/\s/g, ''),
                 urlExp     = new RegExp(
                     "^" +
                     // protocol identifier
-                    "(?:(?:https?|ftp)://)" +
+                    "(?:(?:" + protocol + ")://)" +
                     // user:pass authentication
                     "(?:\\S+(?::\\S*)?@)?" +
                     "(?:" +
@@ -5271,7 +6490,7 @@
                     // resource path
                     "(?:/[^\\s]*)?" +
                     "$", "i"
-                );
+            );
 
             return urlExp.test(value);
         }
@@ -5327,44 +6546,45 @@
     $.fn.bootstrapValidator.i18n.vat = $.extend($.fn.bootstrapValidator.i18n.vat || {}, {
         'default': 'Please enter a valid VAT number',
         countryNotSupported: 'The country code %s is not supported',
-        country: 'Please enter a valid %s VAT number',
+        country: 'Please enter a valid VAT number in %s',
         countries: {
-            AT: 'Austrian',
-            BE: 'Belgian',
-            BG: 'Bulgarian',
-            BR: 'Brazilian',
-            CH: 'Swiss',
-            CY: 'Cypriot',
-            CZ: 'Czech',
-            DE: 'German',
-            DK: 'Danish',
-            EE: 'Estonian',
-            ES: 'Spanish',
-            FI: 'Finnish',
-            FR: 'French',
+            AT: 'Austria',
+            BE: 'Belgium',
+            BG: 'Bulgaria',
+            BR: 'Brazil',
+            CH: 'Switzerland',
+            CY: 'Cyprus',
+            CZ: 'Czech Republic',
+            DE: 'Germany',
+            DK: 'Denmark',
+            EE: 'Estonia',
+            ES: 'Spain',
+            FI: 'Finland',
+            FR: 'France',
             GB: 'United Kingdom',
             GR: 'Greek',
             EL: 'Greek',
-            HU: 'Hungarian',
-            HR: 'Croatian',
-            IE: 'Irish',
+            HU: 'Hungary',
+            HR: 'Croatia',
+            IE: 'Ireland',
             IS: 'Iceland',
-            IT: 'Italian',
-            LT: 'Lithuanian',
+            IT: 'Italy',
+            LT: 'Lithuania',
             LU: 'Luxembourg',
-            LV: 'Latvian',
-            MT: 'Maltese',
-            NL: 'Dutch',
-            NO: 'Norwegian',
-            PL: 'Polish',
-            PT: 'Portuguese',
-            RO: 'Romanian',
-            RU: 'Russian',
-            RS: 'Serbian',
-            SE: 'Swedish',
-            SI: 'Slovenian',
-            SK: 'Slovak',
-            ZA: 'South African'
+            LV: 'Latvia',
+            MT: 'Malta',
+            NL: 'Netherlands',
+            NO: 'Norway',
+            PL: 'Poland',
+            PT: 'Portugal',
+            RO: 'Romania',
+            RU: 'Russia',
+            RS: 'Serbia',
+            SE: 'Sweden',
+            SI: 'Slovenia',
+            SK: 'Slovakia',
+            VE: 'Venezuela',
+            ZA: 'South Africa'
         }
     });
 
@@ -5377,7 +6597,8 @@
         // Supported country codes
         COUNTRY_CODES: [
             'AT', 'BE', 'BG', 'BR', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'EL', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU',
-            'IE', 'IS', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RU', 'RS', 'SE', 'SK', 'SI', 'ZA'
+            'IE', 'IS', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RU', 'RS', 'SE', 'SK', 'SI', 'VE',
+            'ZA'
         ],
 
         /**
@@ -5436,15 +6657,17 @@
          * @returns {Boolean}
          */
         _at: function(value) {
-            if (!/^ATU[0-9]{8}$/.test(value)) {
+            if (/^ATU[0-9]{8}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^U[0-9]{8}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(3);
+            value = value.substr(1);
             var sum    = 0,
                 weight = [1, 2, 1, 2, 1, 2, 1],
                 temp   = 0;
-
             for (var i = 0; i < 7; i++) {
                 temp = parseInt(value.charAt(i), 10) * weight[i];
                 if (temp > 9) {
@@ -5471,15 +6694,16 @@
          * @returns {Boolean}
          */
         _be: function(value) {
-            if (!/^BE[0]{0,1}[0-9]{9}$/.test(value)) {
+            if (/^BE[0]{0,1}[0-9]{9}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0]{0,1}[0-9]{9}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             if (value.length === 9) {
                 value = '0' + value;
             }
-
             if (value.substr(1, 1) === '0') {
                 return false;
             }
@@ -5501,11 +6725,13 @@
          * @returns {Boolean}
          */
         _bg: function(value) {
-            if (!/^BG[0-9]{9,10}$/.test(value)) {
+            if (/^BG[0-9]{9,10}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{9,10}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var sum = 0, i = 0;
 
             // Legal entities
@@ -5648,11 +6874,14 @@
          * @returns {Boolean}
          */
         _ch: function(value) {
-            if (!/^CHE[0-9]{9}(MWST)?$/.test(value)) {
+            if (/^CHE[0-9]{9}(MWST)?$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^E[0-9]{9}(MWST)?$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(3);
+            value = value.substr(1);
             var sum    = 0,
                 weight = [5, 4, 3, 2, 7, 6, 5, 4];
             for (var i = 0; i < 8; i++) {
@@ -5680,11 +6909,12 @@
          * @returns {Boolean}
          */
         _cy: function(value) {
-            if (!/^CY[0-5|9]{1}[0-9]{7}[A-Z]{1}$/.test(value)) {
+            if (/^CY[0-5|9]{1}[0-9]{7}[A-Z]{1}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-5|9]{1}[0-9]{7}[A-Z]{1}$/.test(value)) {
                 return false;
             }
-
-            value = value.substr(2);
 
             // Do not allow to start with "12"
             if (value.substr(0, 2) === '12') {
@@ -5724,11 +6954,12 @@
          * @returns {Boolean}
          */
         _cz: function(value) {
-            if (!/^CZ[0-9]{8,10}$/.test(value)) {
+            if (/^CZ[0-9]{8,10}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{8,10}$/.test(value)) {
                 return false;
             }
-
-            value = value.substr(2);
 
             var sum = 0,
                 i   = 0;
@@ -5811,11 +7042,13 @@
          * @returns {Boolean}
          */
         _de: function(value) {
-            if (!/^DE[0-9]{9}$/.test(value)) {
+            if (/^DE[0-9]{9}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{9}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             return $.fn.bootstrapValidator.helpers.mod11And10(value);
         },
 
@@ -5829,11 +7062,13 @@
          * @returns {Boolean}
          */
         _dk: function(value) {
-            if (!/^DK[0-9]{8}$/.test(value)) {
+            if (/^DK[0-9]{8}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{8}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var sum    = 0,
                 weight = [2, 7, 6, 5, 4, 3, 2, 1];
             for (var i = 0; i < 8; i++) {
@@ -5853,14 +7088,15 @@
          * @returns {Boolean}
          */
         _ee: function(value) {
-            if (!/^EE[0-9]{9}$/.test(value)) {
+            if (/^EE[0-9]{9}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{9}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var sum    = 0,
                 weight = [3, 7, 1, 3, 7, 1, 3, 7, 1];
-
             for (var i = 0; i < 9; i++) {
                 sum += parseInt(value.charAt(i), 10) * weight[i];
             }
@@ -5883,11 +7119,13 @@
          * @returns {Boolean}
          */
         _es: function(value) {
-            if (!/^ES[0-9A-Z][0-9]{7}[0-9A-Z]$/.test(value)) {
+            if (/^ES[0-9A-Z][0-9]{7}[0-9A-Z]$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9A-Z][0-9]{7}[0-9A-Z]$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var dni = function(value) {
                     var check = parseInt(value.substr(0, 8), 10);
                     check = 'TRWAGMYFPDXBNJZSQVHLCKE'[check % 23];
@@ -5947,14 +7185,15 @@
          * @returns {Boolean}
          */
         _fi: function(value) {
-            if (!/^FI[0-9]{8}$/.test(value)) {
+            if (/^FI[0-9]{8}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{8}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var sum    = 0,
                 weight = [7, 9, 10, 5, 8, 4, 2, 1];
-
             for (var i = 0; i < 8; i++) {
                 sum += parseInt(value.charAt(i), 10) * weight[i];
             }
@@ -5974,11 +7213,12 @@
          * @returns {Boolean}
          */
         _fr: function(value) {
-            if (!/^FR[0-9A-Z]{2}[0-9]{9}$/.test(value)) {
+            if (/^FR[0-9A-Z]{2}[0-9]{9}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9A-Z]{2}[0-9]{9}$/.test(value)) {
                 return false;
             }
-
-            value = value.substr(2);
 
             if (!$.fn.bootstrapValidator.helpers.luhn(value.substr(2))) {
                 return false;
@@ -6011,16 +7251,23 @@
          * @returns {Boolean}
          */
         _gb: function(value) {
-            if (!/^GB[0-9]{9}$/.test(value)             /* Standard */
-                && !/^GB[0-9]{12}$/.test(value)         /* Branches */
-                && !/^GBGD[0-9]{3}$/.test(value)        /* Government department */
-                && !/^GBHA[0-9]{3}$/.test(value)        /* Health authority */
-                && !/^GB(GD|HA)8888[0-9]{5}$/.test(value))
+            if (/^GB[0-9]{9}$/.test(value)             /* Standard */
+                || /^GB[0-9]{12}$/.test(value)         /* Branches */
+                || /^GBGD[0-9]{3}$/.test(value)        /* Government department */
+                || /^GBHA[0-9]{3}$/.test(value)        /* Health authority */
+                || /^GB(GD|HA)8888[0-9]{5}$/.test(value))
+            {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{9}$/.test(value)
+                && !/^[0-9]{12}$/.test(value)
+                && !/^GD[0-9]{3}$/.test(value)
+                && !/^HA[0-9]{3}$/.test(value)
+                && !/^(GD|HA)8888[0-9]{5}$/.test(value))
             {
                 return false;
             }
 
-            value = value.substr(2);
             var length = value.length;
             if (length === 5) {
                 var firstTwo  = value.substr(0, 2),
@@ -6061,11 +7308,13 @@
          * @returns {Boolean}
          */
         _gr: function(value) {
-            if (!/^GR[0-9]{9}$/.test(value)) {
+            if (/^(GR|EL)[0-9]{9}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{9}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             if (value.length === 8) {
                 value = '0' + value;
             }
@@ -6082,11 +7331,6 @@
 
         // EL is traditionally prefix of Greek VAT numbers
         _el: function(value) {
-            if (!/^EL[0-9]{9}$/.test(value)) {
-                return false;
-            }
-
-            value = 'GR' + value.substr(2);
             return this._gr(value);
         },
 
@@ -6100,11 +7344,13 @@
          * @returns {Boolean}
          */
         _hu: function(value) {
-            if (!/^HU[0-9]{8}$/.test(value)) {
+            if (/^HU[0-9]{8}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{8}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var sum    = 0,
                 weight = [9, 7, 3, 1, 9, 7, 3, 1];
 
@@ -6125,11 +7371,13 @@
          * @returns {Boolean}
          */
         _hr: function(value) {
-            if (!/^HR[0-9]{11}$/.test(value)) {
+            if (/^HR[0-9]{11}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{11}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             return $.fn.bootstrapValidator.helpers.mod11And10(value);
         },
 
@@ -6143,11 +7391,13 @@
          * @returns {Boolean}
          */
         _ie: function(value) {
-            if (!/^IE[0-9]{1}[0-9A-Z\*\+]{1}[0-9]{5}[A-Z]{1,2}$/.test(value)) {
+            if (/^IE[0-9]{1}[0-9A-Z\*\+]{1}[0-9]{5}[A-Z]{1,2}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{1}[0-9A-Z\*\+]{1}[0-9]{5}[A-Z]{1,2}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var getCheckDigit = function(value) {
                 while (value.length < 7) {
                     value = '0' + value;
@@ -6183,7 +7433,10 @@
          * @returns {Boolean}
          */
         _is: function(value) {
-            return /^IS\d{5,6}$/.test(value);
+            if (/^IS[0-9]{5,6}$/.test(value)) {
+                value = value.substr(2);
+            }
+            return /^[0-9]{5,6}$/.test(value);
         },
 
         /**
@@ -6200,11 +7453,13 @@
          * @returns {Boolean}
          */
         _it: function(value) {
-            if (!/^IT[0-9]{11}$/.test(value)) {
+            if (/^IT[0-9]{11}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{11}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             if (parseInt(value.substr(0, 7), 10) === 0) {
                 return false;
             }
@@ -6231,11 +7486,13 @@
          * @returns {Boolean}
          */
         _lt: function(value) {
-            if (!/^LT([0-9]{7}1[0-9]{1}|[0-9]{10}1[0-9]{1})$/.test(value)) {
+            if (/^LT([0-9]{7}1[0-9]{1}|[0-9]{10}1[0-9]{1})$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^([0-9]{7}1[0-9]{1}|[0-9]{10}1[0-9]{1})$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var length = value.length,
                 sum    = 0,
                 i;
@@ -6263,11 +7520,13 @@
          * @returns {Boolean}
          */
         _lu: function(value) {
-            if (!/^LU[0-9]{8}$/.test(value)) {
+            if (/^LU[0-9]{8}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{8}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             return ((parseInt(value.substr(0, 6), 10) % 89) + '' === value.substr(6, 2));
         },
 
@@ -6281,11 +7540,13 @@
          * @returns {Boolean}
          */
         _lv: function(value) {
-            if (!/^LV[0-9]{11}$/.test(value)) {
+            if (/^LV[0-9]{11}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{11}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var first  = parseInt(value.charAt(0), 10),
                 sum    = 0,
                 weight = [],
@@ -6332,11 +7593,13 @@
          * @returns {Boolean}
          */
         _mt: function(value) {
-            if (!/^MT[0-9]{8}$/.test(value)) {
+            if (/^MT[0-9]{8}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{8}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var sum    = 0,
                 weight = [3, 4, 6, 7, 8, 9, 10, 1];
 
@@ -6357,10 +7620,13 @@
          * @returns {Boolean}
          */
         _nl: function(value) {
-            if (!/^NL[0-9]{9}B[0-9]{2}$/.test(value)) {
+            if (/^NL[0-9]{9}B[0-9]{2}$/.test(value)) {
+               value = value.substr(2);
+            }
+            if (!/^[0-9]{9}B[0-9]{2}$/.test(value)) {
                return false;
             }
-            value = value.substr(2);
+
             var sum    = 0,
                 weight = [9, 8, 7, 6, 5, 4, 3, 2];
             for (var i = 0; i < 8; i++) {
@@ -6382,10 +7648,13 @@
          * @returns {Boolean}
          */
         _no: function(value) {
-            if (!/^NO[0-9]{9}$/.test(value)) {
+            if (/^NO[0-9]{9}$/.test(value)) {
+               value = value.substr(2);
+            }
+            if (!/^[0-9]{9}$/.test(value)) {
                return false;
             }
-            value = value.substr(2);
+
             var sum    = 0,
                 weight = [3, 2, 7, 6, 5, 4, 3, 2];
             for (var i = 0; i < 8; i++) {
@@ -6409,11 +7678,13 @@
          * @returns {Boolean}
          */
         _pl: function(value) {
-            if (!/^PL[0-9]{10}$/.test(value)) {
+            if (/^PL[0-9]{10}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{10}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var sum    = 0,
                 weight = [6, 5, 7, 2, 3, 4, 5, 6, 7, -1];
 
@@ -6434,11 +7705,13 @@
          * @returns {Boolean}
          */
         _pt: function(value) {
-            if (!/^PT[0-9]{9}$/.test(value)) {
+            if (/^PT[0-9]{9}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{9}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var sum    = 0,
                 weight = [9, 8, 7, 6, 5, 4, 3, 2];
 
@@ -6462,10 +7735,12 @@
          * @returns {Boolean}
          */
         _ro: function(value) {
-            if (!/^RO[1-9][0-9]{1,9}$/.test(value)) {
+            if (/^RO[1-9][0-9]{1,9}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[1-9][0-9]{1,9}$/.test(value)) {
                 return false;
             }
-            value = value.substr(2);
 
             var length = value.length,
                 weight = [7, 5, 3, 2, 1, 7, 5, 3, 2].slice(10 - length),
@@ -6485,11 +7760,13 @@
          * @returns {Boolean}
          */
         _ru: function(value) {
-            if (!/^RU([0-9]{9}|[0-9]{12})$/.test(value)) {
+            if (/^RU([0-9]{10}|[0-9]{12})$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^([0-9]{10}|[0-9]{12})$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var i = 0;
             if (value.length === 10) {
                 var sum    = 0,
@@ -6535,11 +7812,13 @@
          * @returns {Boolean}
          */
         _rs: function(value) {
-            if (!/^RS[0-9]{9}$/.test(value)) {
+            if (/^RS[0-9]{9}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{9}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var sum  = 10,
                 temp = 0;
             for (var i = 0; i < 8; i++) {
@@ -6563,11 +7842,14 @@
          * @returns {Boolean}
          */
         _se: function(value) {
-            if (!/^SE[0-9]{10}01$/.test(value)) {
+            if (/^SE[0-9]{10}01$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{10}01$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2, 10);
+            value = value.substr(0, 10);
             return $.fn.bootstrapValidator.helpers.luhn(value);
         },
 
@@ -6581,11 +7863,13 @@
          * @returns {Boolean}
          */
         _si: function(value) {
-            if (!/^SI[0-9]{8}$/.test(value)) {
+            if (/^SI[0-9]{8}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[0-9]{8}$/.test(value)) {
                 return false;
             }
 
-            value = value.substr(2);
             var sum    = 0,
                 weight = [8, 7, 6, 5, 4, 3, 2];
 
@@ -6609,11 +7893,52 @@
          * @returns {Boolean}
          */
         _sk: function(value) {
-            if (!/^SK[1-9][0-9][(2-4)|(6-9)][0-9]{7}$/.test(value)) {
+            if (/^SK[1-9][0-9][(2-4)|(6-9)][0-9]{7}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[1-9][0-9][(2-4)|(6-9)][0-9]{7}$/.test(value)) {
                 return false;
             }
 
-            return (parseInt(value.substr(2), 10) % 11 === 0);
+            return (parseInt(value, 10) % 11 === 0);
+        },
+
+        /**
+         * Validate Venezuelan VAT number (RIF)
+         * Examples:
+         * - Valid: VEJ309272292, VEV242818101, VEJ000126518, VEJ000458324, J309272292, V242818101, J000126518, J000458324
+         * - Invalid: VEJ309272293, VEV242818100, J000126519, J000458323
+         *
+         * @param {String} value VAT number
+         * @returns {Boolean}
+         */
+        _ve: function(value) {
+            if (/^VE[VEJPG][0-9]{9}$/.test(value)) {
+                value = value.substr(2);
+            }
+            if (!/^[VEJPG][0-9]{9}$/.test(value)) {
+                return false;
+            }
+
+            var types  = {
+                    'V': 4,
+                    'E': 8,
+                    'J': 12,
+                    'P': 16,
+                    'G': 20
+                },
+                sum    = types[value.charAt(0)],
+                weight = [3, 2, 7, 6, 5, 4, 3, 2];
+
+            for (var i = 0; i < 8; i++) {
+                sum += parseInt(value.charAt(i + 1), 10) * weight[i];
+            }
+
+            sum = 11 - sum % 11;
+            if (sum === 11 || sum === 10) {
+                sum = 0;
+            }
+            return (sum + '' === value.substr(9, 1));
         },
 
         /**
@@ -6626,7 +7951,11 @@
          * @returns {Boolean}
          */
          _za: function(value) {
-            return /^ZA4\d{9}$/.test(value);
+            if (/^ZA4[0-9]{9}$/.test(value)) {
+                value = value.substr(2);
+            }
+
+            return /^4[0-9]{9}$/.test(value);
         }
     };
 }(window.jQuery));
@@ -6681,20 +8010,30 @@
 }(window.jQuery));
 ;(function($) {
     $.fn.bootstrapValidator.i18n.zipCode = $.extend($.fn.bootstrapValidator.i18n.zipCode || {}, {
-        'default': 'Please enter a valid zip code',
+        'default': 'Please enter a valid postal code',
         countryNotSupported: 'The country code %s is not supported',
-        country: 'Please enter a valid %s',
+        country: 'Please enter a valid postal code in %s',
         countries: {
-            BR: 'Brazilian postal code',
-            CA: 'Canadian postal code',
-            DK: 'Danish postal code',
-            GB: 'United Kingdom postal code',
-            IT: 'Italian postal code',
-            MA: 'Moroccan postal code',
-            NL: 'Dutch postal code',
-            SE: 'Swiss postal code',
-            SG: 'Singapore postal code',
-            US: 'US zip code'
+            AT: 'Austria',
+            BR: 'Brazil',
+            CA: 'Canada',
+            CH: 'Switzerland',
+            CZ: 'Czech Republic',
+            DE: 'Germany',
+            DK: 'Denmark',
+            FR: 'France',
+            GB: 'United Kingdom',
+            IE: 'Ireland',
+            IT: 'Italy',
+            MA: 'Morocco',
+            NL: 'Netherlands',
+            PT: 'Portugal',
+            RO: 'Romania',
+            RU: 'Russia',
+            SE: 'Sweden',
+            SG: 'Singapore',
+            SK: 'Slovakia',
+            US: 'USA'
         }
     });
 
@@ -6704,7 +8043,7 @@
             country: 'country'
         },
 
-        COUNTRY_CODES: ['BR', 'CA', 'DK', 'GB', 'IT', 'MA', 'NL', 'SE', 'SG', 'US'],
+        COUNTRY_CODES: [ 'AT', 'BR', 'CA', 'CH', 'CZ', 'DE', 'DK', 'FR', 'GB', 'IE', 'IT', 'MA', 'NL', 'PT', 'RO', 'RU', 'SE', 'SG', 'SK', 'US'],
 
         /**
          * Return true if and only if the input value is a valid country zip code
@@ -6748,6 +8087,11 @@
             var isValid = false;
             country = country.toUpperCase();
             switch (country) {
+                // http://en.wikipedia.org/wiki/List_of_postal_codes_in_Austria
+                case 'AT':
+                    isValid = /^([1-9]{1})(\d{3})$/.test(value);
+                    break;
+
                 case 'BR':
                     isValid = /^(\d{2})([\.]?)(\d{3})([\-]?)(\d{3})$/.test(value);
                     break;
@@ -6756,12 +8100,37 @@
                     isValid = /^(?:A|B|C|E|G|H|J|K|L|M|N|P|R|S|T|V|X|Y){1}[0-9]{1}(?:A|B|C|E|G|H|J|K|L|M|N|P|R|S|T|V|W|X|Y|Z){1}\s?[0-9]{1}(?:A|B|C|E|G|H|J|K|L|M|N|P|R|S|T|V|W|X|Y|Z){1}[0-9]{1}$/i.test(value);
                     break;
 
+                case 'CH':
+                    isValid = /^([1-9]{1})(\d{3})$/.test(value);
+                    break;
+
+                case 'CZ':
+                    // Test: http://regexr.com/39hhr
+                    isValid = /^(\d{3})([ ]?)(\d{2})$/.test(value);
+                    break;
+
+                // http://stackoverflow.com/questions/7926687/regular-expression-german-zip-codes
+                case 'DE':
+                    isValid = /^(?!01000|99999)(0[1-9]\d{3}|[1-9]\d{4})$/.test(value);
+                    break;
+
                 case 'DK':
                     isValid = /^(DK(-|\s)?)?\d{4}$/i.test(value);
                     break;
 
+                // http://en.wikipedia.org/wiki/Postal_codes_in_France
+                case 'FR':
+                    isValid = /^[0-9]{5}$/i.test(value);
+                    break;
+
                 case 'GB':
                     isValid = this._gb(value);
+                    break;
+
+                // http://www.eircode.ie/docs/default-source/Common/prepare-your-business-for-eircode---published-v2.pdf?sfvrsn=2
+                // Test: http://refiddle.com/1kpl
+                case 'IE':
+                    isValid = /^(D6W|[ACDEFHKNPRTVWXY]\d{2})\s[0-9ACDEFHKNPRTVWXY]{4}$/.test(value);
                     break;
 
                 // http://en.wikipedia.org/wiki/List_of_postal_codes_in_Italy
@@ -6779,14 +8148,32 @@
                     isValid = /^[1-9][0-9]{3} ?(?!sa|sd|ss)[a-z]{2}$/i.test(value);
                     break;
 
+                // Test: http://refiddle.com/1l2t
+                case 'PT':
+                    isValid = /^[1-9]\d{3}-\d{3}$/.test(value);
+                    break;
+
+                case 'RO':
+                    isValid = /^(0[1-8]{1}|[1-9]{1}[0-5]{1})?[0-9]{4}$/i.test(value);
+                    break;
+
+                case 'RU':
+                    isValid = /^[0-9]{6}$/i.test(value);
+                    break;
+
                 case 'SE':
                     isValid = /^(S-)?\d{3}\s?\d{2}$/i.test(value);
                     break;
 
                 case 'SG':
                     isValid = /^([0][1-9]|[1-6][0-9]|[7]([0-3]|[5-9])|[8][0-2])(\d{4})$/i.test(value);
-                    break;                
-                
+                    break;
+
+                case 'SK':
+                    // Test: http://regexr.com/39hhr
+                    isValid = /^(\d{3})([ ]?)(\d{2})$/.test(value);
+                    break;
+
                 case 'US':
                 /* falls through */
                 default:
