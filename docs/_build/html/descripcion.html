@@ -7,7 +7,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Bienvenidos a la documentación de SinVi &mdash; SinVi 0.0.1 documentation</title>
+  <title>Descripción de la aplicación &mdash; SinVi 0.0.1 documentation</title>
   
 
   
@@ -30,8 +30,9 @@
   
 
   
-    <link rel="top" title="SinVi 0.0.1 documentation" href="#"/>
-        <link rel="next" title="Introducción" href="introduccion.html"/> 
+    <link rel="top" title="SinVi 0.0.1 documentation" href="index.html"/>
+        <link rel="next" title="Glosario" href="glosario.html"/>
+        <link rel="prev" title="Instalación" href="uso_basico.html"/> 
 
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
@@ -46,7 +47,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-nav-search">
         
-          <a href="#" class="fa fa-home"> SinVi</a>
+          <a href="index.html" class="fa fa-home"> SinVi</a>
         
         
 <div role="search">
@@ -62,7 +63,7 @@
         
           
           
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="introduccion.html">Introducción</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="introduccion.html#descripcion-general-del-modelo">Descripción general del modelo</a></li>
 <li class="toctree-l2"><a class="reference internal" href="introduccion.html#componentes-del-modelo">Componentes del modelo</a></li>
@@ -70,10 +71,10 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="uso_basico.html">Instalación</a></li>
-<li class="toctree-l1"><a class="reference internal" href="descripcion.html">Descripción de la aplicación</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="descripcion.html#simulation-parameters">Simulation parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="descripcion.html#plot">Plot</a></li>
-<li class="toctree-l2"><a class="reference internal" href="descripcion.html#statistics">Statistics</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Descripción de la aplicación</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#simulation-parameters">Simulation parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plot">Plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#statistics">Statistics</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="glosario.html">Glosario</a></li>
@@ -90,7 +91,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="#">SinVi</a>
+        <a href="index.html">SinVi</a>
       </nav>
 
 
@@ -99,12 +100,12 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="#">Docs</a> &raquo;</li>
+    <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li>Bienvenidos a la documentación de SinVi</li>
+    <li>Descripción de la aplicación</li>
       <li class="wy-breadcrumbs-aside">
         
-          <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+          <a href="_sources/descripcion.txt" rel="nofollow"> View page source</a>
         
       </li>
   </ul>
@@ -112,27 +113,55 @@
 </div>
           <div role="main" class="document">
             
-  <div class="section" id="bienvenidos-a-la-documentacion-de-sinvi">
-<h1>Bienvenidos a la documentación de SinVi<a class="headerlink" href="#bienvenidos-a-la-documentacion-de-sinvi" title="Permalink to this headline">¶</a></h1>
-<p>SinVi es una pequeña aplicación en Flask que permite simular una política de inventario.</p>
-<p>Contenido:</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="introduccion.html">Introducción</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="introduccion.html#descripcion-general-del-modelo">Descripción general del modelo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="introduccion.html#componentes-del-modelo">Componentes del modelo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="introduccion.html#glosario">Glosario</a></li>
+  <div class="section" id="descripcion-de-la-aplicacion">
+<h1>Descripción de la aplicación<a class="headerlink" href="#descripcion-de-la-aplicacion" title="Permalink to this headline">¶</a></h1>
+<img alt="_images/sinvi2.gif" src="_images/sinvi2.gif" />
+<p>La aplicación tiene tres vistas principales:</p>
+<ul class="simple">
+<li><strong>Simulation parameters</strong>: El formulario donde se ingresan los parametros de la simulación</li>
+<li><strong>Plot</strong>: La gráfica del comportamiento del nivel de inventario en el tiempo</li>
+<li><strong>Statistics</strong>: Las estadisticas de costos</li>
 </ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="uso_basico.html">Instalación</a></li>
-<li class="toctree-l1"><a class="reference internal" href="descripcion.html">Descripción de la aplicación</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="descripcion.html#simulation-parameters">Simulation parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="descripcion.html#plot">Plot</a></li>
-<li class="toctree-l2"><a class="reference internal" href="descripcion.html#statistics">Statistics</a></li>
+<div class="section" id="simulation-parameters">
+<h2>Simulation parameters<a class="headerlink" href="#simulation-parameters" title="Permalink to this headline">¶</a></h2>
+<img alt="_images/parameters.png" src="_images/parameters.png" />
+<p>En este formulario se ingresan los parametros de la simulación:</p>
+<ul class="simple">
+<li>el producto,</li>
+<li>el número de periodos que durará la simulación</li>
+<li>la política de abastecimiento deseada.</li>
 </ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="glosario.html">Glosario</a></li>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<ul class="last simple">
+<li>Se pueden crear o eliminar productos. Al momento de crear se definen las distribuciones de la demanda y tiempo de entrega, los costos por unidad y la cantidad de inventario inicial</li>
+<li>El periodo debe ser un número entero positivo</li>
+<li>Solo hay dos políticas en el momento: Qs y RS</li>
 </ul>
+</div>
+</div>
+<div class="section" id="plot">
+<h2>Plot<a class="headerlink" href="#plot" title="Permalink to this headline">¶</a></h2>
+<img alt="_images/plot.png" src="_images/plot.png" />
+<p>En esta gráfica se visualiza el comportamiento del nivel de inventario a través del tiempo.</p>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">Al acercar el puntero del mouse a la linea se muestra el detalle de la semana seleccionada y el valor del nivel del inventario en ese momento</p>
+</div>
+</div>
+<div class="section" id="statistics">
+<h2>Statistics<a class="headerlink" href="#statistics" title="Permalink to this headline">¶</a></h2>
+<img alt="_images/stats.png" src="_images/stats.png" />
+<p>En esta gráfica se visualizan los tres componentes del costo de la política de abastecimiento seleccionada:</p>
+<ul class="simple">
+<li>costo de almacenamiento,</li>
+<li>costo de ordenar</li>
+<li>costo de las ventas perdidas.</li>
+</ul>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">Al acercar el puntero del mouse a una de las areas se muestra el valor del componente del costo seleccionado</p>
+</div>
 </div>
 </div>
 
@@ -142,8 +171,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="introduccion.html" class="btn btn-neutral float-right" title="Introducción">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="glosario.html" class="btn btn-neutral float-right" title="Glosario">Next <span class="fa fa-arrow-circle-right"></span></a>
       
+      
+        <a href="uso_basico.html" class="btn btn-neutral" title="Instalación"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

@@ -13,6 +13,7 @@ Contenido:
 .. toctree::
    :maxdepth: 2
 
-   identificacion_problema
-   supuestos
+   introduccion
    uso_basico
+   descripcion
+   glosario

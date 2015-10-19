@@ -1,0 +1,242 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Introducción &mdash; SinVi 0.0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="SinVi 0.0.1 documentation" href="index.html"/>
+        <link rel="next" title="Instalación" href="uso_basico.html"/>
+        <link rel="prev" title="Bienvenidos a la documentación de SinVi" href="index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+          <a href="index.html" class="fa fa-home"> SinVi</a>
+        
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Introducción</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#descripcion-general-del-modelo">Descripción general del modelo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#componentes-del-modelo">Componentes del modelo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#glosario">Glosario</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="uso_basico.html">Instalación</a></li>
+<li class="toctree-l1"><a class="reference internal" href="descripcion.html">Descripción de la aplicación</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="descripcion.html#simulation-parameters">Simulation parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="descripcion.html#plot">Plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="descripcion.html#statistics">Statistics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="glosario.html">Glosario</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">SinVi</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Introducción</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/introduccion.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="introduccion">
+<h1>Introducción<a class="headerlink" href="#introduccion" title="Permalink to this headline">¶</a></h1>
+<p>Un modelo es una representación simplificada de un sistema. Una simulación generalmente se refiere a una versión computarizada de un modelo, en el cual se analizan las interacciones de las partes del sistema a través del tiempo.</p>
+<p>En la simulación de nuestro sistema de inventario se estudia como los siguientes componentes afectan al nivel de inventario:</p>
+<ul class="simple">
+<li>demanda</li>
+<li>politica de abastecimiento</li>
+<li>tiempo de entrega</li>
+</ul>
+<div class="section" id="descripcion-general-del-modelo">
+<h2>Descripción general del modelo<a class="headerlink" href="#descripcion-general-del-modelo" title="Permalink to this headline">¶</a></h2>
+<p>Para nuestro modelo, se supone un almacén con un solo producto.</p>
+<p>Periodo a periodo se disminuye el nivel de inventario de acuerdo a la demanda. Si el tamaño del inventario al momento de la solicitud es mayor o igual a la demanda, se satisface inmediatamente. Si la demanda excede el nivel de inventario, la parte que no puede ser entregada será asumida como una venta perdida.</p>
+<p>De acuerdo a la politica de abastecimiento definida, se revisa el nivel de inventario y se realizan los pedidos para evitar quedarse sin stock. El pedido llegará al almacén de acuerdo al tiempo de entrega.</p>
+<div class="section" id="grafica-del-comportamiento-nivel-de-inventario-en-el-tiempo">
+<h3>Gráfica del comportamiento nivel de inventario en el tiempo<a class="headerlink" href="#grafica-del-comportamiento-nivel-de-inventario-en-el-tiempo" title="Permalink to this headline">¶</a></h3>
+<img alt="_images/plot.png" src="_images/plot.png" />
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Los pedidos se realizan en función de la posición de inventario y no del nivel de inventario. Esto porque la posición de inventario captura el inventario a la mano y el que está por llegar, de esta forma se evita la tendencia de subestimar o exceder la cantidad pedida.</p>
+</div>
+</div>
+</div>
+<div class="section" id="componentes-del-modelo">
+<h2>Componentes del modelo<a class="headerlink" href="#componentes-del-modelo" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="demanda-y-tiempo-de-entrega">
+<h3>Demanda y Tiempo de entrega<a class="headerlink" href="#demanda-y-tiempo-de-entrega" title="Permalink to this headline">¶</a></h3>
+<p>La demanda y el tiempo de entrega del producto son aleatorios, y son modelados mediante una distribución de probabilidad que se define al momento de crear el producto. Hasta el momento existen tres formas para modelarla: constante, normal y triangular.</p>
+<p>Dentro de la aplicación existe un generador de números aleatorios los cuales son utilizados para simular sus valores. Si por ejemplo se define que la demanda sigue una distribución normal con media 20.000 y desviación estandar 8000, sera mucho más probable encontrar valores entre 12.000 y 28.000</p>
+</div>
+<div class="section" id="politicas-de-inventario">
+<h3>Politicas de inventario<a class="headerlink" href="#politicas-de-inventario" title="Permalink to this headline">¶</a></h3>
+<p>Por el momento se dispone de dos politicas de abastecimiento:</p>
+<div class="section" id="politica-qs">
+<h4>Politica Qs<a class="headerlink" href="#politica-qs" title="Permalink to this headline">¶</a></h4>
+<p>Si es posible conocer el nivel de inventario en tiempo real, se sugiere la política
+de reabastecimiento (Q,s). Si el nivel almacenado es inferior o igual a un punto de reorden &#8220;s&#8221;,
+se piden &#8220;Q&#8221; unidades.</p>
+</div>
+<div class="section" id="politica-rs">
+<h4>Politica RS<a class="headerlink" href="#politica-rs" title="Permalink to this headline">¶</a></h4>
+<p>Si solo se pueden hacer verificaciones del inventario cada cierto periodo de tiempo, esta
+disponible la política (R,S). Cada &#8220;R&#8221; periodos se revisa el nivel de inventario, si el nivel
+almacenado es superior a &#8220;S&#8221; no se realiza petición, si no es así se pedirá hasta llegar a &#8220;S&#8221;.</p>
+</div>
+</div>
+</div>
+<div class="section" id="glosario">
+<h2>Glosario<a class="headerlink" href="#glosario" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Demanda</strong>: mercancía que los consumidores piden y estan dispuestos a comprar</li>
+<li><strong>Distribución de probabilidad</strong>: es una tabla o ecuación que asocia cada resultado de un experimento estadistico con su probabilidad de ocurrencia.</li>
+<li><strong>Tiempo de entrega</strong>: tiempo que transcurre entre el momento que se realiza la orden y el instante en que se recibe</li>
+<li><strong>Nivel de inventario</strong>: la cantidad almacenada actual de un producto</li>
+<li><strong>Posición del inventario</strong>: es el nivel del inventario más los pedidos pendientes por llegar</li>
+<li><strong>Política de abastecimiento</strong>: son el conjunto de reglas que definen cuando se debe realizar un pedido para reabastecer el inventario</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="uso_basico.html" class="btn btn-neutral float-right" title="Instalación">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Bienvenidos a la documentación de SinVi"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Javier Cárdenas.
+    </p>
+  </div>
+
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+  
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
