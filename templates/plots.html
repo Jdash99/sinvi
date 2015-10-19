@@ -1,42 +1,87 @@
 {% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% include 'add_product.html' %}
 
 {% block title %}Plots{% endblock %}
 
 {% block content %}
 
-<div class="container">
+<div class="container-fluid">
 <div class="row">
 
-  <div class="col s4">
+  <div class="col-md-4">
     <h1>Simulation</h1>
     <hr>
- 
       <!-- Form -->
-    <div class="row" id="parameters">
-      <form class="col s12" id="parametersForm">
+    <div id="parameters">
+      <form id="parametersForm" class="form-horizontal" role="form" method="POST">
+
+        <!-- Product --> 
+        <div class="form-group">
+          <label class="col-md-3 control-label">Product</label>
+          <div class="col-md-6">
+            <select class="form-control" id="product">
+              <!-- <option></option> -->
+            </select>
+          </div>
+          <div class="col-md-3">
+            <div class="row">
+              <button type="button" class="btn btn-submit" data-toggle="modal" data-target="#myModal">
+                <span class="glyphicon glyphicon-plus-sign"></span>
+              </button>
+              <button type="button" class="btn btn-danger" data-toggle="modal" id="delete">
+                <span class="glyphicon glyphicon-minus-sign"></span>
+              </button>
+
+            </div>
+          </div>
+        </div>
 
         <!-- Periods -->
-        <div class="row">
-          <div class="input-field col s12">
-            <input id="periods" type="text" class="validate">
-            <label for="periods">Set the number of periods</label>
+        <div class="form-group">
+          <label class="col-md-3 control-label">Periods</label>
+          <div class="col-md-9">
+            <input class="form-control" placeholder="Set the number of periods" id="periods" name="periods">
+          </div>
+        </div>
+
+        <!-- Policies -->
+        <div class='form-group'>
+          <label class="col-md-3 control-label">Policy</label>
+          <div class="col-md-9">
+            <div class="form-group row">
+              <div class="col-md-4 policy-btn">
+                <select class="form-control" id="policy">
+                  <option>Qs</option>
+                  <option>RS</option>
+                </select>
+              </div>
+              <div class='col-md-4 policy-btn'>
+                <label class="sr-only"></label>
+                <input class="form-control" placeholder="Q" id="p1" name="p1">
+              </div>
+              <div class='col-md-4 policy-btn'>
+                <label class="sr-only"></label>
+                <input class="form-control" placeholder="s" id="p2" name="p2"> 
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Simulate btn -->
         <div class="form-group">
-          <div class="col s3">
+          <div class="col-md-3">
           </div>
-          <div class="col s4">
+          <div class="col-md-4">
             <button type="submit" class="btn btn-submit">Simulate</button>
           </div>
         </div>
 
       </form>  <!-- form end -->
     </div> <!-- parameters div -->
-  </div> <!-- col s4 -->
+  </div> <!-- col-md-4 -->
 
-<!--   <div class="col s5">
+  <div class="col-md-5">
     <h1>Plot</h1>
     <hr>
     <div id="chartBox1" class="chartWindow">
@@ -44,13 +89,13 @@
     </div> 
   </div>
 
-  <div class="col s3">
+  <div class="col-md-3">
     <h1>Statistics</h1>
     <hr>
     <div id="chartBox2" class="chartWindow">
       <div id="pieContainer"></div>
     </div> 
-  </div> -->
+  </div>
 
 </div> <!-- end row -->
 </div> <!-- end main container -->
