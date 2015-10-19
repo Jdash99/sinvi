@@ -6,7 +6,7 @@ Resumen
 ========
 
 :Nombre: Sinvi
-:Documentacion: 
+:Documentacion: http://sinvi.readthedocs.org/en/latest/
 :Autor: Javier Cárdenas <jdash99@gmail.com>
 :Version: 0.0.1
 
