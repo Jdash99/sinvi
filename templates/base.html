@@ -1,41 +1,19 @@
-{% extends "bootstrap/base.html" %}
-
 {% block title %}Simulation Plots{% endblock %}
-
-{% block navbar %}
-<div class="navbar navbar-default" role="navigation">
-    <div class="container">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="/">Simulation</a>
-        </div>
-    </div>
-</div>
-{% endblock %}
 
 {% block content %}
 {% endblock %}
 
 {% block styles %}
-    {{super()}}
     <link rel="stylesheet"
-          href="{{url_for('static', filename='css/styles.css')}}">
-    <link rel="stylesheet"
-      href="{{url_for('static', filename='css/bootstrapValidator.css')}}">
+      href="{{url_for('static', filename='css/materialize.min.css')}}">      
     <link href="//fonts.googleapis.com/css?family=Ubuntu:300italic,300,400italic,400,500italic,500,700italic,700" rel="stylesheet" type="text/css">
 {% endblock %}
 
-{% block scripts %}
-    {{super()}}   
-    <script src="{{url_for('static', filename='js/bootstrapValidator.js')}}"></script>
+{% block scripts %}  
     <script src="{{url_for('static', filename='js/d3.min.js')}}"></script>
     <script src="{{url_for('static', filename='js/dimple.v2.1.6.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/materialize.min.js')}}"></script>
     <script src="{{url_for('static', filename='js/parameters.js')}}"></script>
     <script src="{{url_for('static', filename='js/product.js')}}"></script>
-    <!--<script src="{{url_for('static', filename='js/input_validation.js')}}"></script>-->
+    <script src="{{url_for('static', filename='js/input_validation.js')}}"></script>
 {% endblock %}

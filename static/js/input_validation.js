@@ -1,37 +1,5 @@
-(function($) {
-    $.fn.bootstrapValidator.validators.password = {
-        validate: function(validator, $field, options) {
-            var value = $field.val();
-            if (value === '') {
-                return true;
-            }
-
-            // Check the password strength
-            if (value.length < 8) {
-                return false;
-            }
-
-            // The password doesn't contain any uppercase character
-            if (value === value.toLowerCase()) {
-                return false;
-            }
-
-            // The password doesn't contain any uppercase character
-            if (value === value.toUpperCase()) {
-                return false;
-            }
-
-            // The password doesn't contain any digit
-            if (value.search(/[0-9]/) < 0) {
-                return false;
-            }
-
-            return true;
-        }
-    };
-}(window.jQuery));
-
 $(document).ready(function() {
+
     $('#productForm').bootstrapValidator({
         fields: {
             product_name: {
@@ -69,7 +37,7 @@ $(document).ready(function() {
                         message: "Must be equal or greater than zero"
                     }
                 }
-            },        
+            },
             order_cost: {
                 validators: {
                     notEmpty: {
@@ -125,49 +93,7 @@ $(document).ready(function() {
                         message: "Must be equal or greater than zero"
                     }
                 }
-            },            
-            leadtime_p1: {
-                validators: {
-                    notEmpty: {
-                        message: "Required"
-                    },
-                    integer: {
-                        message: "Must be an integer"
-                    },
-                    greaterThan: {
-                        value: 0,
-                        message: "Must be equal or greater than zero"
-                    }
-                }
-            },
-            leadtime_p2: {
-                validators: {
-                    notEmpty: {
-                        message: "Required"
-                    },
-                    integer: {
-                        message: "Must be an integer"
-                    },
-                    greaterThan: {
-                        value: 0,
-                        message: "Must be equal or greater than zero"
-                    }
-                }
-            },    
-            leadtime_p3: {
-                validators: {
-                    notEmpty: {
-                        message: "Required"
-                    },
-                    integer: {
-                        message: "Must be an integer"
-                    },
-                    greaterThan: {
-                        value: 0,
-                        message: "Must be equal or greater than zero"
-                    }
-                }
-            },                                
+            }
         }
     });
 
@@ -207,11 +133,17 @@ $(document).ready(function() {
                         message: 'The amount must be a number'
                     }
                 }
-            },
+            }
         }
+    })
+    .on('error.field.bv', function(e, data) {
+        data.bv.disableSubmitButtons(true); // disable submit buttons on errors
+    })
+    .on('status.field.bv', function(e, data) {
+        data.bv.disableSubmitButtons(false); // enable submit buttons on valid
     });
 
     $('#myModal').on('shown.bs.modal', function() {
-    $('#productForm').bootstrapValidator('resetForm', true);
-});
+        $('#productForm').bootstrapValidator('resetForm', true);
+    });
 });
