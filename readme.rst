@@ -17,7 +17,11 @@ SinVi es una pequeña aplicación web para la simulación de políticas de inven
 Como usar?
 ==========
 
-Clona este repo y ejecuta:
+Prueba el demo en:
+
+`Demo <https://nsinvi.herokuapp.com/>`_
+
+O Clona este repo y ejecuta localmente:
 ::
 	git clone git://github.com/Jdash99/sinvi.git
 	cd sinvi

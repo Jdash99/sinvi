@@ -1,6 +1,6 @@
 {% extends "bootstrap/base.html" %}
 
-{% block title %}Bokeh Plots{% endblock %}
+{% block title %}Simulation Plots{% endblock %}
 
 {% block navbar %}
 <div class="navbar navbar-default" role="navigation">
@@ -13,11 +13,6 @@
                 <span class="icon-bar"></span>
             </button>
             <a class="navbar-brand" href="/">Simulation</a>
-        </div>
-        <div class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-                <li><a href="/">Home</a></li>
-            </ul>
         </div>
     </div>
 </div>
@@ -39,8 +34,8 @@
     {{super()}}   
     <script src="{{url_for('static', filename='js/bootstrapValidator.js')}}"></script>
     <script src="{{url_for('static', filename='js/d3.min.js')}}"></script>
-    <script src="{{url_for('static', filename='js/dimple.v2.1.0.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/dimple.v2.1.6.min.js')}}"></script>
     <script src="{{url_for('static', filename='js/parameters.js')}}"></script>
     <script src="{{url_for('static', filename='js/product.js')}}"></script>
-    <script src="{{url_for('static', filename='js/input_validation.js')}}"></script>
+    <!--<script src="{{url_for('static', filename='js/input_validation.js')}}"></script>-->
 {% endblock %}
