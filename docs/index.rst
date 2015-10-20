@@ -14,6 +14,6 @@ Contenido:
    :maxdepth: 2
 
    introduccion
-   uso_basico
+   instalacion
    descripcion
    glosario
